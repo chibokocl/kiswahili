@@ -83,39 +83,48 @@ def interactive_spell_checker():
                 print(f"? '{word}' not found in corpus, no suggestion available")
 
 def test_spell_checker():
-    """Test the spell checker with some common Swahili words and misspellings."""
-    test_cases = [
-        # Correct words
-        ("jambo", "jambo"),
-        ("asante", "asante"),
-        ("karibu", "karibu"),
-        ("habari", "habari"),
-        
-        # Common misspellings
-        ("jambo", "jambo"),  # correct
-        ("jambu", "jambo"),  # missing 'o'
-        ("jamboo", "jambo"),  # extra 'o'
-        ("jamb", "jambo"),    # missing 'o'
-        
-        # More complex cases
-        ("asante", "asante"),  # correct
-        ("asanti", "asante"),  # 'i' instead of 'e'
-        ("asante", "asante"),  # correct
-        
-        # Numbers and common words
-        ("moja", "moja"),      # correct
-        ("mbili", "mbili"),    # correct
-        ("tatu", "tatu"),      # correct
-        
-        # Common Swahili words
-        ("mungu", "mungu"),    # correct
-        ("bwana", "bwana"),    # correct
-        ("mama", "mama"),      # correct
-        ("baba", "baba"),      # correct
-    ]
-    
+    """Test the spell checker with dynamically generated test cases from corpus data."""
     print("Testing Swahili Spell Checker")
     print("=" * 40)
+    
+    # Generate test cases dynamically from corpus data
+    test_cases = []
+    
+    # Get common words from corpus
+    common_words = [word for word, freq in WORDS.most_common(100) if freq > 10]
+    
+    # Test correct words
+    for word in common_words[:20]:
+        test_cases.append((word, word))  # Correct word should remain correct
+    
+    # Generate misspellings for testing
+    for word in common_words[:10]:
+        if len(word) >= 3:
+            # Create common misspellings
+            misspellings = []
+            
+            # Remove last character
+            if len(word) > 2:
+                misspellings.append((word[:-1], word))
+            
+            # Add extra character at end
+            misspellings.append((word + word[-1], word))
+            
+            # Replace last character with similar one
+            if word[-1] in 'aeiou':
+                for vowel in 'aeiou':
+                    if vowel != word[-1]:
+                        misspellings.append((word[:-1] + vowel, word))
+                        break
+            
+            # Transpose last two characters
+            if len(word) >= 3:
+                misspellings.append((word[:-2] + word[-1] + word[-2], word))
+            
+            test_cases.extend(misspellings[:3])  # Limit to 3 misspellings per word
+    
+    # Limit total test cases to reasonable number
+    test_cases = test_cases[:50]
     
     correct = 0
     total = len(test_cases)

@@ -2,6 +2,7 @@ import re
 import json
 from collections import Counter
 from difflib import get_close_matches
+from swahili_context_analyzer import SwahiliContextAnalyzer
 
 def load_swahili_corpus():
     """Load the Swahili corpus from JSON file."""
@@ -55,41 +56,14 @@ def predict_word(partial_word, num_suggestions=3):
 
 def predict_with_context(partial_word, context_words=None, num_suggestions=3):
     """
-    Predict word completions with context awareness.
-    Context words can help improve predictions.
+    Predict word completions with context awareness using the context analyzer.
     """
-    partial_word = partial_word.lower().strip()
+    # Use the context analyzer for more intelligent predictions
+    analyzer = SwahiliContextAnalyzer()
+    suggestions = analyzer.get_contextual_suggestions(partial_word, context_words, num_suggestions)
     
-    if not partial_word:
-        return [word for word, _ in WORDS.most_common(num_suggestions)]
-    
-    # Basic prefix matching
-    prefix_matches = []
-    for word, frequency in WORDS.items():
-        if word.startswith(partial_word):
-            # Boost frequency if word appears in context
-            boost = 1.0
-            if context_words:
-                for context_word in context_words:
-                    if context_word.lower() in word or word in context_word.lower():
-                        boost *= 1.5
-            prefix_matches.append((word, frequency * boost))
-    
-    # Sort by boosted frequency
-    prefix_matches.sort(key=lambda x: x[1], reverse=True)
-    
-    suggestions = [word for word, _ in prefix_matches[:num_suggestions]]
-    
-    # Fill remaining slots with similar words if needed
-    if len(suggestions) < num_suggestions:
-        all_words = list(WORDS.keys())
-        similar_words = get_close_matches(partial_word, all_words, n=num_suggestions*2, cutoff=0.5)
-        
-        for word in similar_words:
-            if word not in suggestions and len(suggestions) < num_suggestions:
-                suggestions.append(word)
-    
-    return suggestions[:num_suggestions]
+    # Return just the words (without confidence scores for backward compatibility)
+    return [word for word, confidence, reason in suggestions]
 
 def interactive_predictor():
     """Interactive word predictor for testing."""
@@ -120,22 +94,31 @@ def interactive_predictor():
             print("Please enter a partial word.")
 
 def test_predictor():
-    """Test the predictor with various inputs."""
-    test_cases = [
-        "ja",      # Should suggest jambo, jana, etc.
-        "as",      # Should suggest asante, asubuhi, etc.
-        "ka",      # Should suggest karibu, kama, etc.
-        "ha",      # Should suggest habari, hakuna, etc.
-        "mu",      # Should suggest mungu, mtu, etc.
-        "ba",      # Should suggest baba, bado, etc.
-        "ma",      # Should suggest mama, mambo, etc.
-        "wa",      # Should suggest watu, wana, etc.
-        "ni",      # Should suggest nini, nina, etc.
-        "si",      # Should suggest siku, sisi, etc.
-    ]
-    
+    """Test the predictor with dynamically generated inputs based on corpus data."""
     print("Testing Swahili Word Predictor")
     print("=" * 40)
+    
+    # Generate test cases dynamically from corpus data
+    # Find common prefixes and create realistic test inputs
+    common_words = [word for word, freq in WORDS.most_common(200) if freq > 50]
+    
+    # Extract common prefixes (2-3 characters) from frequent words
+    prefixes = set()
+    for word in common_words:
+        if len(word) >= 3:
+            prefixes.add(word[:2])  # 2-letter prefixes
+        if len(word) >= 4:
+            prefixes.add(word[:3])  # 3-letter prefixes
+    
+    # Convert to list and sort by frequency of words starting with that prefix
+    prefix_frequency = {}
+    for prefix in prefixes:
+        count = sum(freq for word, freq in WORDS.items() if word.startswith(prefix))
+        prefix_frequency[prefix] = count
+    
+    # Get top prefixes by frequency
+    top_prefixes = sorted(prefix_frequency.items(), key=lambda x: x[1], reverse=True)[:10]
+    test_cases = [prefix for prefix, freq in top_prefixes]
     
     for partial in test_cases:
         suggestions = predict_word(partial)
@@ -161,22 +144,55 @@ def predict_sentence_completion(sentence, num_suggestions=3):
     return predict_with_context(last_word, context_words, num_suggestions)
 
 def demo_sentence_completion():
-    """Demonstrate sentence completion."""
-    test_sentences = [
-        "jambo",
-        "asante sana",
-        "habari za",
-        "karibu",
-        "mungu",
-        "bwana asifiwe",
-        "mama na",
-        "baba yangu",
-        "siku ya",
-        "mtu wa",
-    ]
-    
+    """Demonstrate sentence completion using dynamic data from corpus."""
     print("Sentence Completion Demo")
     print("=" * 30)
+    
+    # Generate test cases dynamically from corpus data
+    # Find common word patterns and create realistic test sentences
+    common_words = [word for word, freq in WORDS.most_common(50) if freq > 100]
+    
+    # Create test sentences based on common word combinations
+    test_sentences = []
+    
+    # Single word completions (most common words)
+    for word in common_words[:5]:
+        test_sentences.append(word)
+    
+    # Two-word combinations (common patterns)
+    common_two_word_patterns = []
+    for word1 in common_words[:10]:
+        for word2 in common_words[:10]:
+            if word1 != word2:
+                # Check if this combination appears frequently in context
+                combined = f"{word1} {word2}"
+                if combined in WORDS or any(f"{word1} {word2}" in context for context in WORDS.keys()):
+                    common_two_word_patterns.append(combined)
+                    if len(common_two_word_patterns) >= 5:
+                        break
+        if len(common_two_word_patterns) >= 5:
+            break
+    
+    test_sentences.extend(common_two_word_patterns)
+    
+    # Generate partial sentences for completion testing
+    for pattern in common_two_word_patterns[:3]:
+        words = pattern.split()
+        if len(words) >= 2:
+            # Create partial sentence by removing last word
+            partial = " ".join(words[:-1])
+            test_sentences.append(partial)
+    
+    # If we don't have enough dynamic test cases, create some based on word frequency
+    if len(test_sentences) < 10:
+        # Find words that commonly appear at sentence beginnings
+        sentence_starters = [word for word, freq in WORDS.most_common(100) 
+                           if freq > 50 and len(word) > 2]
+        for starter in sentence_starters[:10-len(test_sentences)]:
+            test_sentences.append(starter)
+    
+    # Limit to reasonable number of test cases
+    test_sentences = test_sentences[:10]
     
     for sentence in test_sentences:
         suggestions = predict_sentence_completion(sentence)
