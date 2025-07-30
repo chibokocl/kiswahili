@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
 """
-KISWAHILI GRAMMAR ENGINE - NGELI-AWARE IMPLEMENTATION
+KI-MICHEWENI GRAMMAR ENGINE - ENHANCED NGELI IMPLEMENTATION
 
-A grammar engine that properly implements ngeli principles as documented in
-'ngeli za kiswahili.pdf' and OFP 008. This engine:
-- Dynamically identifies noun classes (ngeli)
-- Tracks agreement patterns across sentence elements
-- Uses structural analysis rather than hardcoded word lists
-- Properly handles all ngeli pairs and special cases
+A comprehensive grammar engine implementing the full 18-ngeli system as documented in
+'ngeli za kiswahili.pdf' (Hamad Khamis Juma, 2015). This engine:
+- Implements all 18 ngeli classes found in Ki-Micheweni dialect
+- Handles complex allomorphic variations and phonological rules
+- Supports semantic functions (ukuzaji, udogoshaji, dharau, sifa)
+- Manages ngeli migration and dialectal variations
+- Processes zero morphemes and complex morphophonological patterns
+- Implements proper KK, KY, KV agreement systems
 - Follows OFP 008 principles for sentence analysis
 """
 
 import re
-from typing import Dict, List, Optional, Tuple, Set, Any
+from typing import Dict, List, Optional, Tuple, Set, Any, Union
+from enum import Enum
+from dataclasses import dataclass
 
 class NgeliSystem:
     """Represents the Kiswahili noun class (ngeli) system with proper agreement patterns"""
