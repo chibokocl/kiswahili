@@ -163,9 +163,9 @@ If you use this toolkit in your research, please cite:
 ```bibtex
 @software{kiswahili_nlp_2024,
   title={Kiswahili NLP Toolkit},
-  author={Your Name},
+  author={Clement Chiboko},
   year={2024},
-  url={https://github.com/yourusername/kiswahili}
+  url={https://github.com/chibokocl/kiswahili}
 }
 ```
 
