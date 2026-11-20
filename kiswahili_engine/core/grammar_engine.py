@@ -10,6 +10,8 @@ import re
 
 from .types import SentenceType, SyntacticRole, AgreementAnalysis, VerbAnalysis
 from .ngeli_system import EnhancedNgeliSystem
+from .verb_morphology import VerbParser
+from .noun_lexicon import NounLexicon
 
 
 class EnhancedKiswahiliGrammarEngine:
@@ -36,7 +38,14 @@ class EnhancedKiswahiliGrammarEngine:
             config: Optional configuration parameters
         """
         self.config = config or {}
-        self.ngeli_system = EnhancedNgeliSystem()
+        lexicon_path = self.config.get("verb_lexicon_path")
+        parser = VerbParser.from_wordlist(lexicon_path) if lexicon_path else VerbParser.from_kamusi()
+        noun_path = self.config.get("noun_lexicon_path")
+        self.ngeli_system = EnhancedNgeliSystem(
+            verb_parser=parser,
+            noun_lexicon=NounLexicon.load(noun_path) if noun_path else None,
+            use_noun_lexicon=self.config.get("use_noun_lexicon", True),
+        )
         
         # Sentence type classification patterns
         self.sentence_type_patterns = {
@@ -182,7 +191,7 @@ class EnhancedKiswahiliGrammarEngine:
         verb_indices = []
         for i, word in enumerate(words):
             verb_analysis = self.ngeli_system.analyze_verb_structure_enhanced(word)
-            if verb_analysis["tense"] or self._contains_verbal_markers(word):
+            if verb_analysis["tense"] or self.ngeli_system.verb_parser.is_finite_verb(word):
                 verb_indices.append(i)
                 structure["verb_positions"].append({
                     "position": i,
@@ -226,10 +235,9 @@ class EnhancedKiswahiliGrammarEngine:
         return structure
     
     def _contains_verbal_markers(self, word: str) -> bool:
-        """Check if word contains verbal tense markers"""
-        tense_markers = ["-na-", "-me-", "-ta-", "-li-", "-ki-", "-se-"]
-        return any(marker.strip('-') in word.lower() for marker in tense_markers)
-    
+        """True if the verb parser finds a confident finite analysis of ``word``."""
+        return self.ngeli_system.verb_parser.is_finite_verb(word)
+
     def _analyze_token_enhanced(self, word: str, context: Dict, structure: Dict) -> Dict[str, Any]:
         """
         Enhanced token analysis with full contextual information.

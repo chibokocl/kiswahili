@@ -43,6 +43,7 @@ setup(
     include_package_data=True,
     package_data={
         "kiswahili": ["corpus/*.json", "corpus/*.txt"],
+        "kiswahili_engine": ["data/*.json", "web/*.html"],
     },
     entry_points={
         "console_scripts": [

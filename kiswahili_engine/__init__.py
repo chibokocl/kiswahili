@@ -11,6 +11,9 @@ from .core.ngeli_system import EnhancedNgeliSystem
 from .core.grammar_engine import EnhancedKiswahiliGrammarEngine
 from .core.types import SemanticFunction, NgeliInfo
 from .core.phonology import PhonologicalRules
+from .core.verb_morphology import VerbParser, VerbParse
+from .core.noun_lexicon import NounLexicon, NounEntry
+from .checker import Checker, Issue, Suggestion
 
 __version__ = "2.0.0"
 __author__ = "Ki-Micheweni Grammar Engine Team"
@@ -21,13 +24,24 @@ __all__ = [
     "EnhancedKiswahiliGrammarEngine", 
     "SemanticFunction",
     "NgeliInfo",
-    "PhonologicalRules"
+    "PhonologicalRules",
+    "VerbParser",
+    "VerbParse",
+    "NounLexicon",
+    "NounEntry",
+    "Checker",
+    "Issue",
+    "Suggestion",
 ]
 
 # Convenience imports
-def create_engine():
-    """Create a new instance of the enhanced grammar engine"""
-    return EnhancedKiswahiliGrammarEngine()
+def create_engine(config=None):
+    """Create a new instance of the enhanced grammar engine.
+
+    ``config={"verb_lexicon_path": "swahili_corpus/swahili_words.txt"}`` builds a
+    verb-root lexicon from a word list, which sharpens root/extension analysis.
+    """
+    return EnhancedKiswahiliGrammarEngine(config)
 
 def analyze_sentence(sentence: str):
     """Quick sentence analysis using default engine"""

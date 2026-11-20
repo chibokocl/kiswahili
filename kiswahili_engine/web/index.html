@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="sw">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiswahili Checker</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+  textarea { width: 100%; height: 9rem; font: inherit; padding: .6rem; box-sizing: border-box; }
+  button { font: inherit; padding: .3rem .8rem; cursor: pointer; }
+  .row { margin: .6rem 0; display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  .examples button { font-size: .85rem; }
+  #marked { white-space: pre-wrap; border: 1px solid #ccc; padding: .6rem; min-height: 3rem; border-radius: 4px; }
+  mark { cursor: pointer; border-radius: 3px; padding: 0 1px; }
+  mark.agreement { background: #ffd7d7; } mark.spelling { background: #fff1b8; } mark.capitalization { background: #d6e8ff; }
+  .issue { border-left: 4px solid #999; padding: .3rem .6rem; margin: .5rem 0; background: #fafafa; }
+  .issue.agreement { border-color: #d33; } .issue.spelling { border-color: #cc9a00; } .issue.capitalization { border-color: #3a7bd5; }
+  .tag { font-size: .75rem; background: #eee; border-radius: 3px; padding: 0 .35rem; margin-right: .4rem; }
+  .sw { color: #555; font-size: .9rem; }
+  .fix { margin-right: .4rem; }
+  pre { background: #f4f4f4; padding: .6rem; overflow: auto; font-size: .85rem; }
+  h2 { font-size: 1.05rem; margin-top: 1.6rem; }
+  .muted { color: #666; font-size: .9rem; }
+</style>
+</head>
+<body>
+<h1>Kiswahili Checker</h1>
+<p class="muted">Type or paste Kiswahili. Issues are highlighted; click a highlight or a suggestion to apply the fix.</p>
+
+<textarea id="text" spellcheck="false">kitabu umeanguka. Watoto anacheza mpira na miti mzuri. Alikwenda shule kila sikuu.</textarea>
+<div class="row">
+  <button id="check">Check</button>
+  <button id="fixall">Apply all fixes</button>
+  <label>min confidence <input id="conf" type="number" min="0" max="1" step="0.05" value="0.6" style="width:4.5rem"></label>
+  <span id="status" class="muted"></span>
+</div>
+<div class="row examples"><span class="muted">Try:</span>
+  <button data-t="Kitabu kimeanguka. Mtoto anakula chakula. Watoto wanacheza mpira.">correct text (no issues)</button>
+  <button data-t="Kitabu umeanguka. Watoto anacheza mpira.">verb agreement</button>
+  <button data-t="Alipanda miti mzuri. Mtoto kizuri alikuja.">adjective agreement</button>
+  <button data-t="Ng'ombe mkubwa analala. Mwalimu wamefika. Leo anakuja. Kijana mzuri amefika.">looks wrong, is fine</button>
+  <button data-t="Alikwenda shule kila sikuu. mtoto anasoma.">spelling / capital</button>
+</div>
+
+<h2>Result</h2>
+<div id="marked"></div>
+<div id="issues"></div>
+
+<h2>Look up a word</h2>
+<div class="row"><input id="word" placeholder="e.g. anakula, mtoto, kizuri" style="padding:.3rem"><button id="lookup">Look up</button></div>
+<pre id="lookupout">noun class, verb breakdown, adjective form...</pre>
+
+<script>
+const $ = id => document.getElementById(id);
+let issues = [], timer = null, seq = 0;
+
+async function check() {
+  const my = ++seq;
+  $('status').textContent = 'checking...';
+  try {
+    const r = await fetch('/api/check', { method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ text: $('text').value, min_confidence: parseFloat($('conf').value) || 0 }) });
+    const data = await r.json();
+    if (my !== seq) return;                       // a newer request is in flight
+    issues = data.issues || [];
+    render();
+    $('status').textContent = issues.length + ' issue' + (issues.length === 1 ? '' : 's');
+  } catch (e) { $('status').textContent = 'server not reachable'; }
+}
+
+function applyFix(issue, replacement) {
+  const t = $('text').value;
+  $('text').value = t.slice(0, issue.start) + replacement + t.slice(issue.end);
+  check();
+}
+
+function render() {
+  const text = $('text').value, box = $('marked');
+  box.textContent = '';
+  let pos = 0;
+  for (const i of issues) {
+    if (i.start < pos) continue;
+    box.append(text.slice(pos, i.start));
+    const m = document.createElement('mark');
+    m.className = i.category; m.textContent = text.slice(i.start, i.end); m.title = i.message;
+    if (i.suggestions.length) m.onclick = () => applyFix(i, i.suggestions[0].text);
+    box.append(m); pos = i.end;
+  }
+  box.append(text.slice(pos));
+  const list = $('issues'); list.textContent = '';
+  for (const i of issues) {
+    const d = document.createElement('div'); d.className = 'issue ' + i.category;
+    const head = document.createElement('div');
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = i.rule + ' ' + i.confidence.toFixed(2);
+    head.append(tag, i.message);
+    const sw = document.createElement('div'); sw.className = 'sw'; sw.textContent = i.message_sw;
+    d.append(head, sw);
+    for (const s of i.suggestions.slice(0, 3)) {
+      const b = document.createElement('button'); b.className = 'fix'; b.textContent = '→ ' + s.text;
+      b.onclick = () => applyFix(i, s.text); d.append(b);
+    }
+    list.append(d);
+  }
+}
+
+$('check').onclick = check;
+$('text').oninput = () => { clearTimeout(timer); timer = setTimeout(check, 400); };
+$('conf').onchange = check;
+$('fixall').onclick = async () => {
+  const r = await fetch('/api/check', { method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ text: $('text').value, min_confidence: parseFloat($('conf').value) || 0 }) });
+  $('text').value = (await r.json()).corrected; check();
+};
+document.querySelectorAll('.examples button').forEach(b => b.onclick = () => { $('text').value = b.dataset.t; check(); });
+
+async function lookup() {
+  const w = $('word').value.trim(); if (!w) return;
+  const r = await fetch('/api/lookup?w=' + encodeURIComponent(w));
+  $('lookupout').textContent = JSON.stringify(await r.json(), null, 2);
+}
+$('lookup').onclick = lookup;
+$('word').onkeydown = e => { if (e.key === 'Enter') lookup(); };
+check();
+</script>
+</body>
+</html>

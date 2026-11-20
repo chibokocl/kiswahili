@@ -36,6 +36,119 @@ This engine is based on the research by **Hamad Khamis Juma (2015)** on "Ngeli z
 - **Batch Processing**: Analyze multiple sentences efficiently
 - **JSON Export**: Structured data output for integration
 
+## Writing checker ("Kiswahili Grammarly")
+
+```python
+from kiswahili_engine import Checker
+from kiswahili_engine.checker import apply_suggestions
+
+text = "kitabu umeanguka. Watoto anacheza mpira. Alikwenda shule kila sikuu."
+chk = Checker()
+for issue in chk.check(text):
+    print(issue.rule, issue.text, issue.start, issue.end, [s.text for s in issue.suggestions])
+print(apply_suggestions(text, chk.check(text)))
+# Kitabu kimeanguka. Watoto wanacheza mpira. Alikwenda shule kila siku.
+```
+
+Or from a shell: `python -m kiswahili_engine "Kitabu umeanguka."` (`--json` for machine output).
+
+**Try it in a browser** (no installs, standard library only):
+
+```bash
+python -m kiswahili_engine.server        # then open http://127.0.0.1:8000
+```
+
+One page: type text, see highlighted issues with explanations, click a fix to apply it, and
+look up any word (noun class, verb breakdown, adjective forms).
+
+Each `Issue` has a character span, rule id, category, severity, an explanation in English
+and Kiswahili, ranked suggestions and a confidence; `check(min_confidence=0.6)` filters.
+Rules today: `AGR-SV` (subject-verb agreement), `AGR-NA` (noun + adjective/numeral/possessive/connective *-a*), `SPELL`, `CAP`. The checker is
+precision-first: it deliberately skips patterns that are correct Kiswahili but look wrong
+(animate nouns taking a-/wa-, respect plurals, adverbial nouns like *leo*, vocatives).
+
+Measure it with `python tools/evaluate_checker.py`. See [ROADMAP.md](../ROADMAP.md) for what is
+measured, what is not, and what comes next.
+
+## Adjective lexicon and concord
+
+`data/adjective_lexicon.json` (`tools/build_adjective_lexicon.py`) holds 61 inflecting stems
+(dictionary `kv` entries plus a short hand-curated core of basics the school dictionary omits,
+tagged `curated`) and ~650 invariable adjectives. `core/concord.py` generates every class form
+(*-zuri* → mzuri, wazuri, mizuri, kizuri, nzuri ...), plus the connective *-a*, possessives and
+*-ote*, and indexes them by surface form. The checker only suggests a generated form that is
+also attested in the corpus.
+
+## Verb lexicon
+
+`VerbParser.from_kamusi()` (the engine default) loads ~3,700 verb roots from the same
+dictionary, with transitivity and the extensions the dictionary attests for each root
+(`tools/build_verb_lexicon.py`). Attested derivations outrank other root/extension splits.
+
+## Verb morphology
+
+`VerbParser` (`core/verb_morphology.py`) segments verbs by slot:
+
+```
+[NEG] SM [NEG2] [TAM] [REL] [OM] [ku] ROOT [EXT...] FV [REL-suffix]
+```
+
+```python
+from kiswahili_engine import VerbParser
+
+parser = VerbParser()
+parser.best("hatupendi").segmentation()      # 'hatu-pend-i'
+parser.best("anakula").segmentation()        # 'a-na-ku-l-a'
+parser.best("atakupenda").object_marker      # 'ku'
+for p in parser.parse("alipikiwa"):          # every plausible analysis, ranked
+    print(p.segmentation(), round(p.score, 2))
+```
+
+Covers positive and negative tenses (na/li/me/ta/ka/ki/nge/ngali/ja/ku, habitual hu-),
+subjunctive, infinitive, relatives (infixed and suffixed), object markers,
+and the extensions applicative, stative, causative, reciprocal and passive with vowel
+harmony. Not covered: reversive/positional extensions, reduplication, `amba-` relatives,
+`-ile` perfect.
+
+Verbs are ambiguous without a lexicon (is `pikia` a root, or `pik` + applicative?), so
+`parse()` returns ranked alternatives. Pass a root lexicon to sharpen the ranking:
+
+```python
+parser = VerbParser.from_wordlist("swahili_corpus/swahili_words.txt")
+engine = create_engine({"verb_lexicon_path": "swahili_corpus/swahili_words.txt"})
+```
+
+Run the tests with `python -m unittest discover -s kiswahili_engine/tests`.
+
+## Noun lexicon
+
+Prefix rules alone classify only ~23% of dictionary nouns correctly (they can't tell `mtoto`
+1/2 from `mti` 3/4, or see that `chakula` is 7/8), so the engine looks nouns up in a lexicon
+built from *Kamusi Teule ya Kiswahili* (`data/noun_lexicon.json`: ~13k headwords with
+ngeli and explicit plurals; definitions are not stored). Unknown words fall back to the
+prefix heuristics.
+
+```python
+from kiswahili_engine import NounLexicon
+
+lex = NounLexicon.load()
+lex.best("chakula")          # ngeli 7/8, singular
+lex.candidates("mtoto")      # [('1/2','singular'), ('3/4','singular')]  ambiguous headword
+lex.best("watoto").source    # 'plural' (explicit); derived plurals are 'plural_rule', lower confidence
+```
+
+When a noun has several readings, subject-verb agreement checks accept any reading that
+agrees with the verb and say which one was used. To regenerate the data (needs poppler's
+`pdftotext`):
+
+```bash
+python tools/build_noun_lexicon.py swahili_corpus/kamusi.pdf kiswahili_engine/data/noun_lexicon.json
+```
+
+Disable with `create_engine({"use_noun_lexicon": False})`. Known gaps: the dictionary has
+no entry for some common nouns (e.g. `nyumba`), and ~130 entries are skipped because the
+PDF's two-column layout separates the headword from its ngeli tag.
+
 ## Installation
 
 ```bash

@@ -11,6 +11,8 @@ import re
 
 from .types import NgeliInfo, SemanticFunction
 from .phonology import PhonologicalRules, MorphemeSegmenter
+from .verb_morphology import VerbParser, VERB_THRESHOLD
+from .noun_lexicon import NounLexicon
 from ..data.ngeli_data import NGELI_CLASSES, TENSE_MARKERS
 from ..data.semantic_domains import (
     SEMANTIC_DOMAINS, SEMANTIC_CONTEXT_PATTERNS, COMMON_MIGRATIONS,
@@ -31,7 +33,16 @@ class EnhancedNgeliSystem:
     - Context-aware analysis
     """
     
-    def __init__(self):
+    def __init__(self, verb_parser: Optional[VerbParser] = None,
+                 noun_lexicon: Optional[NounLexicon] = None, use_noun_lexicon: bool = True):
+        """
+        Args:
+            verb_parser: Verb parser (default: ``VerbParser.from_kamusi()``).
+            noun_lexicon: Noun lexicon; defaults to the packaged dictionary-derived one.
+            use_noun_lexicon: ``False`` forces prefix heuristics only (useful for baselines).
+        """
+        self.verb_parser = verb_parser or VerbParser.from_kamusi()
+        self.noun_lexicon = (noun_lexicon or NounLexicon.load()) if use_noun_lexicon else None
         self.ngeli_classes = NGELI_CLASSES
         self.tense_markers = TENSE_MARKERS
         self.phonological_rules = PhonologicalRules()
@@ -91,7 +102,12 @@ class EnhancedNgeliSystem:
         """
         word = word.lower().strip()
         context = context or {}
-        
+
+        # Dictionary lookup beats prefix heuristics (mtoto is 1/2, chakula is 7/8)
+        lexical = self._identify_from_lexicon(word, context)
+        if lexical:
+            return lexical
+
         candidates = []
         
         # Try morphological analysis for each ngeli class
@@ -141,6 +157,29 @@ class EnhancedNgeliSystem:
             morphological_analysis=best_analysis
         )
     
+    def _identify_from_lexicon(self, word: str, context: Dict) -> Optional[NgeliInfo]:
+        if not self.noun_lexicon:
+            return None
+        entries = self.noun_lexicon.lookup(word)
+        if not entries:
+            return None
+        best = entries[0]
+        return NgeliInfo(
+            ngeli_class=best.ngeli,
+            number=best.number,
+            semantic_function=self._determine_semantic_function(word, best.ngeli, context),
+            confidence=best.confidence,
+            morphological_analysis={
+                "segmentation_method": "lexicon",
+                "lemma": best.lemma,
+                "source": best.source,
+                "alternatives": [
+                    {"ngeli": e.ngeli, "number": e.number, "lemma": e.lemma, "source": e.source}
+                    for e in entries[1:]
+                ],
+            },
+        )
+
     def _determine_number(self, prefix: str, ngeli: str, ngeli_data: Dict) -> str:
         """Determine if prefix indicates singular or plural"""
         if prefix in [p.rstrip('-') for p in ngeli_data.get("singular_prefixes", [])]:
@@ -288,36 +327,48 @@ class EnhancedNgeliSystem:
         result["subject_analysis"] = subject_info
         ngeli = subject_info.ngeli_class
         number = subject_info.number
-        
+
         # Check for special agreement cases (e.g., disability terms)
         special_agreement_ngeli = self._check_special_agreement(subject, ngeli)
         agreement_ngeli = special_agreement_ngeli or ngeli
-        
+
         if special_agreement_ngeli:
             result["special_cases"].append(
                 f"Using {special_agreement_ngeli} agreement for {ngeli} morphology"
             )
-        
-        # Enhanced verb analysis
+
+        # Parse the verb independently of the subject, then compare its subject
+        # marker with the classes the subject can control.
         verb_analysis = self.analyze_verb_structure_enhanced(
             verb, {"subject_ngeli": agreement_ngeli, "subject_number": number}
         )
-        
-        # Check verb agreement
+        verb_sm = verb_analysis["structure"]["subject_prefix"]
+        candidates = [tuple(c) for c in verb_analysis["subject_candidates"]]
+
+        # A noun can have several lexicon readings (mtoto: 1/2 child, 3/4 shoot);
+        # if the primary reading disagrees but another one agrees, use that one.
+        if verb_sm and (agreement_ngeli, number) not in candidates and self.noun_lexicon:
+            for alt_ngeli, alt_number in self.noun_lexicon.candidates(subject):
+                if (alt_ngeli, alt_number) in candidates:
+                    agreement_ngeli, ngeli, number = alt_ngeli, alt_ngeli, alt_number
+                    result["special_cases"].append(
+                        f"Subject '{subject}' read as ngeli {alt_ngeli} ({alt_number}) "
+                        f"to match the verb"
+                    )
+                    break
         expected_kk = self.get_agreement_prefix(agreement_ngeli, number, "kk")
-        if expected_kk:
-            verb_prefix = verb_analysis.get("structure", {}).get("subject_prefix")
-            if verb_prefix == expected_kk.rstrip('-'):
-                result["verb_agreement"] = True
-                result["explanation"].append(
-                    f"✓ Verb '{verb}' agrees with subject '{subject}' (ngeli {ngeli}, {number})"
-                )
-            else:
-                result["explanation"].append(
-                    f"✗ Verb '{verb}' disagrees with subject '{subject}' - "
-                    f"expected {expected_kk}, got {verb_prefix or 'none'}"
-                )
-        
+
+        if verb_sm and (agreement_ngeli, number) in candidates:
+            result["verb_agreement"] = True
+            result["explanation"].append(
+                f"✓ Verb '{verb}' agrees with subject '{subject}' (ngeli {ngeli}, {number})"
+            )
+        else:
+            result["explanation"].append(
+                f"✗ Verb '{verb}' disagrees with subject '{subject}' - "
+                f"expected {expected_kk or '?'}, got {verb_sm or 'none'}"
+            )
+
         # Check adjective agreement
         if adjective:
             expected_kv = self.get_agreement_prefix(agreement_ngeli, number, "kv")
@@ -355,102 +406,66 @@ class EnhancedNgeliSystem:
     
     def analyze_verb_structure_enhanced(self, verb: str, context: Dict = None) -> Dict[str, Any]:
         """
-        Enhanced verb structure analysis with better morphological parsing.
-        
+        Analyze verb morphology with :class:`VerbParser`.
+
         Args:
             verb: The verb to analyze
-            context: Optional context including subject information
-            
+            context: Optional ``subject_ngeli`` / ``subject_number`` used to prefer
+                an analysis whose subject marker agrees with the subject.
+
         Returns:
-            Comprehensive verb analysis
+            Dict with ``structure`` (subject_prefix, tense_marker, object_prefix,
+            root, extensions, final_vowel, ...), ``tense``, ``subject_candidates``
+            (ngeli/number pairs the subject marker allows) and ranked ``alternatives``.
+            Low-confidence parses (bare imperatives, noun-like words) yield no tense.
         """
         context = context or {}
         analysis = {
             "word": verb,
             "structure": {
-                "subject_prefix": None,
-                "object_prefix": None,
-                "tense_marker": None,
-                "root": None,
-                "extensions": [],
-                "final_vowel": None
+                "subject_prefix": None, "object_prefix": None, "tense_marker": None,
+                "root": None, "extensions": [], "final_vowel": None,
+                "polarity": None, "relative_marker": None,
             },
-            "ngeli": None,
-            "number": None,
-            "tense": None,
-            "explanation": []
+            "ngeli": None, "number": None, "tense": None,
+            "form": None, "confidence": 0.0,
+            "subject_candidates": [], "alternatives": [], "explanation": [],
         }
-        
-        working_verb = verb.lower()
-        
-        # Extract final vowel
-        if working_verb and working_verb[-1] in "aeiou":
-            analysis["structure"]["final_vowel"] = working_verb[-1]
-            working_verb = working_verb[:-1]
-        else:
-            analysis["explanation"].append("No valid final vowel found")
+
+        subject = None
+        if context.get("subject_ngeli") and context.get("subject_number"):
+            subject = (context["subject_ngeli"], context["subject_number"])
+
+        parse = self.verb_parser.best(verb, subject)
+        if parse is None or parse.score < VERB_THRESHOLD:
+            analysis["explanation"].append("No confident verb analysis")
             return analysis
-        
-        # Extract tense marker
-        tense_found = False
-        for tense_marker, tense_name in self.tense_markers.items():
-            clean_marker = tense_marker.strip('-')
-            if clean_marker in working_verb:
-                analysis["structure"]["tense_marker"] = clean_marker
-                analysis["tense"] = tense_name
-                
-                # Split around tense marker
-                parts = working_verb.split(clean_marker, 1)
-                if len(parts) == 2:
-                    prefix_part, root_part = parts
-                    working_verb = prefix_part + root_part
-                    tense_found = True
-                    break
-        
-        if not tense_found:
-            analysis["explanation"].append("No tense marker identified")
-        
-        # Extract subject prefix using context
-        subject_ngeli = context.get("subject_ngeli")
-        subject_number = context.get("subject_number")
-        
-        if subject_ngeli and subject_number:
-            expected_prefix = self.get_agreement_prefix(subject_ngeli, subject_number, "kk")
-            if expected_prefix:
-                clean_expected = expected_prefix.rstrip('-')
-                if working_verb.startswith(clean_expected):
-                    analysis["structure"]["subject_prefix"] = clean_expected
-                    analysis["ngeli"] = subject_ngeli
-                    analysis["number"] = subject_number
-                    working_verb = working_verb[len(clean_expected):]
-        
-        # What remains is root + extensions
-        if working_verb:
-            analysis["structure"]["root"] = working_verb
-        
-        # Generate explanation
-        if analysis["structure"]["subject_prefix"]:
-            explanation_parts = []
-            explanation_parts.append(analysis["structure"]["subject_prefix"])
-            
-            if analysis["structure"]["tense_marker"]:
-                explanation_parts.append(analysis["structure"]["tense_marker"])
-            
-            if analysis["structure"]["root"]:
-                explanation_parts.append(analysis["structure"]["root"])
-            
-            if analysis["structure"]["final_vowel"]:
-                explanation_parts.append(analysis["structure"]["final_vowel"])
-            
-            explanation = f"Verb structure: {'-'.join(explanation_parts)}"
-            
-            if analysis["ngeli"] and analysis["number"]:
-                explanation += f" [ngeli {analysis['ngeli']}, {analysis['number']}]"
-            
-            analysis["explanation"].insert(0, explanation)
-        
+
+        st = analysis["structure"]
+        st["subject_prefix"] = parse.negative_prefix or parse.subject_marker
+        st["tense_marker"] = parse.tam
+        st["object_prefix"] = parse.object_marker
+        st["root"] = parse.root
+        st["extensions"] = [surface for _, surface in parse.extensions]
+        st["extension_labels"] = [label for label, _ in parse.extensions]
+        st["final_vowel"] = parse.final_vowel or None
+        st["polarity"] = parse.polarity
+        st["relative_marker"] = parse.relative or parse.relative_suffix
+
+        analysis["tense"] = parse.tam_name
+        analysis["form"] = parse.form
+        analysis["confidence"] = round(parse.score, 3)
+        analysis["subject_candidates"] = [list(c) for c in parse.subject_ngeli()]
+        if subject and subject in parse.subject_ngeli():
+            analysis["ngeli"], analysis["number"] = subject
+        analysis["alternatives"] = [
+            {"segmentation": p.segmentation(), "form": p.form, "score": round(p.score, 3)}
+            for p in self.verb_parser.parse(verb)[1:4] if p.score >= VERB_THRESHOLD
+        ]
+        gloss = " ".join(f"{s}({g})" for s, g in parse.morphemes())
+        analysis["explanation"].append(f"Verb structure: {parse.segmentation()}  [{gloss}]")
         return analysis
-    
+
     def detect_ngeli_migration(self, word: str, context: Dict = None) -> Dict[str, Any]:
         """
         Detect if word has migrated from its canonical ngeli class.
