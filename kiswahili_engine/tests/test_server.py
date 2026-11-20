@@ -48,6 +48,14 @@ class TestServer(unittest.TestCase):
         self.assertEqual(d["verb"][0]["segmentation"], "a-na-ku-l-a")
         d = json.load(urllib.request.urlopen(self.base + "/api/lookup?w=mtoto"))
         self.assertEqual(d["noun"][0]["ngeli"], "1/2")
+        self.assertFalse(d["inanimate"])
+        d = json.load(urllib.request.urlopen(self.base + "/api/lookup?w=kitabu"))
+        self.assertTrue(d["inanimate"])
+
+    def test_check_returns_related_spans(self):
+        out = self.post({"text": "Kitabu mzuri kimeanguka."})
+        (issue,) = [i for i in out["issues"] if i["rule"] == "AGR-NA"]
+        self.assertEqual(issue["related"][0]["text"], "Kitabu")
 
     def test_bad_requests(self):
         with self.assertRaises(urllib.error.HTTPError) as cm:

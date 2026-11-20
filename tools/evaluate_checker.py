@@ -109,8 +109,9 @@ def concord_eval(chk, n, rng):
     nouns.sort(key=lambda e: e.word)
     rng.shuffle(nouns)
     cls_of = {"3/4": "3", "7/8": "7", "9/10": "9", "5/6": "5"}
-    # wrong classes that no animate-noun exemption would forgive
-    wrong_pool = {"3": ["7", "9", "5"], "7": ["4", "9", "6"], "9": ["7", "4", "6"], "5": ["7", "4", "9"]}
+    # wrong classes; class 1 (mzuri) is only an error for inanimate nouns -- kijana mzuri is fine
+    wrong_pool = {"3": ["7", "9", "5"], "7": ["4", "9", "6", "1"], "9": ["7", "4", "6", "1"],
+                  "5": ["7", "4", "9", "1"]}
     st = dict(n=0, fp=0, detected=0, fixed=0)
     for e in nouns:
         if st["n"] >= n:

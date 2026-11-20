@@ -65,6 +65,53 @@ ENTRY = re.compile(
 )
 WORD = re.compile(r"^[a-z]+(?:['-][a-z]+)*$")
 
+# Any dictionary entry start (noun, verb, adjective ...): used to find where a definition ends.
+ANY_ENTRY = re.compile(
+    r"(?m)^[^\s|()]+?\d{0,2}[ \t]+(?:Pia,[^\n]{0,40}?|\([^)\n]*\)[ \t]+)?\b(?:nm|kt|kv|kl|ki|kh|ku|kw)\b")
+
+# --- animacy from the first sense of the definition (the definition itself is not stored) ---
+ANIMATE_HEADS = set("""mtu watu binadamu mwanamume mwanamke mwanamme mnyama wanyama ndege samaki mdudu wadudu
+nyoka mtoto watoto kijana msichana mvulana mzee kiumbe viumbe jini shetani malaika mja mtumishi kiongozi
+mfalme malkia mtawala mganga mwalimu mwanafunzi askari mwanajeshi kuku mbwa paka nyuki mjusi chura nyani
+ng'ombe mbuzi kondoo punda farasi ngamia simba chui tembo mwenyeji mgeni jirani rafiki adui mkulima
+mfanyakazi mwanachama mkuu mwenye aliye anayefanya anayependa ambaye mwana mzazi mama baba ndugu mjomba
+shangazi bibi babu mjukuu mpwa kabila jamaa""".split())
+INANIMATE_HEADS = set("""hali sehemu tendo kitendo kipande chombo kifaa kipimo kazi eneo tabia mtindo jinsi mti
+mmea tunda ugonjwa maradhi kitu vitu mchezo mkusanyiko upande herufi taaluma ala pahali mahali kiungo jumla
+mchanganyiko mfumo uwezo elimu njia nguo chakula kinywaji siku wakati sauti harufu rangi mji nchi mto bahari
+kitabu ufundi desturi utaratibu maneno neno tamko mashine vifaa madini kimiminika dawa chumba nyumba jengo
+barabara kisiwa jambo hisia mawazo wazo tukio sherehe shughuli namna kipindi mwezi mwaka wiki hatua
+ugumu uvimbe kidonda jeraha kelele fujo ghasia mali pesa fedha sarafu mapato gharama bei kodi ushuru
+ardhi shamba mlima bonde pwani ziwa mvua upepo moto maji jua mwanga giza joto baridi hewa kemikali
+mabaki ngozi nywele mfupa damu nyama maziwa mafuta sukari chumvi unga mkate""".split())
+
+
+def _first_sense_words(body):
+    body = re.sub(r"\s+", " ", body.strip())
+    body = re.sub(r"^(\([a-z.]+\)\s*)+", "", body)            # (kd) (ksh) labels
+    body = re.sub(r"^\d\.\s*", "", body)
+    return [w.strip(".,;:()!?").lower() for w in body.split()[:6]]
+
+
+def definition_head(body):
+    w = _first_sense_words(body)
+    if len(w) >= 3 and w[0] in ("aina", "namna", "jina") and w[1] in ("ya", "la", "wa"):
+        return w[2]
+    return w[0] if w else ""
+
+
+def animacy(ngeli, body):
+    """1 = animate, 0 = inanimate, None = unknown.  Class 1/2 nouns are animate by class."""
+    if ngeli in ("1/2", "1a/2a"):
+        return 1
+    head = definition_head(body)
+    if head in ANIMATE_HEADS:
+        return 1
+    if head in INANIMATE_HEADS:
+        return 0
+    return None
+
+
 
 def normalise_tag(raw):
     """'|a-/wa-|', 'ki-vi-', 'li-/ya)' ... -> ('a','wa') etc.; None if unusable."""
@@ -97,6 +144,7 @@ def parse(text):
     text = text.replace("\x0c", "\n")
     stats = collections.Counter()
     entries = {}
+    starts = [m.start() for m in ANY_ENTRY.finditer(text)] + [len(text)]
     for m in ENTRY.finditer(text):
         stats["matched"] += 1
         mid = m.group("mid").strip()
@@ -118,6 +166,10 @@ def parse(text):
         ngeli, number, invariable = TAG_MAP[tag]
         plural = plural_from(mid) or plural_from(m.group("post"))
         proper = m.group("head")[:1].isupper()
+        nxt = next((x for x in starts if x > m.end()), len(text))
+        body = text[m.end():min(nxt, m.end() + 300)]
+        anim = animacy(ngeli, body)
+        heads = definition_head(body)
         variants = []
         pm = re.match(r"Pia,\s*(.+)", mid)
         if pm:
@@ -130,11 +182,36 @@ def parse(text):
             if key in entries:
                 if plural and not entries[key]["pl"]:
                     entries[key]["pl"] = plural
+                # homographs: any animate sense wins; inanimate only if every sense agrees
+                old = entries[key]["anim"]
+                entries[key]["anim"] = 1 if 1 in (old, anim) else (0 if old == 0 and anim == 0 else None)
                 continue
             entries[key] = {"w": word, "ngeli": ngeli, "n": number, "pl": plural,
-                            "inv": invariable, "proper": proper, "variant": is_variant}
+                            "inv": invariable, "proper": proper, "variant": is_variant,
+                            "anim": anim, "_head": heads}
             stats["entries"] += 1
-    return list(entries.values()), stats
+    out = list(entries.values())
+    # "aina ya kaa": inherit animacy from the entry for the head word
+    by_word = {}
+    for e in out:
+        by_word.setdefault(e["w"], []).append(e["anim"])
+    for _ in range(2):
+        for e in out:
+            if e["anim"] is None and e["_head"] in by_word:
+                vals = by_word[e["_head"]]
+                if 1 in vals:
+                    e["anim"] = 1
+                elif vals and all(v == 0 for v in vals):
+                    e["anim"] = 0
+        by_word = {}
+        for e in out:
+            by_word.setdefault(e["w"], []).append(e["anim"])
+    for e in out:
+        e.pop("_head", None)
+    stats["animate"] = sum(1 for e in out if e["anim"] == 1)
+    stats["inanimate"] = sum(1 for e in out if e["anim"] == 0)
+    stats["animacy_unknown"] = sum(1 for e in out if e["anim"] is None)
+    return out, stats
 
 
 def extract_text(pdf):
@@ -153,11 +230,12 @@ def main():
     text = extract_text(args.pdf)
     entries, stats = parse(text)
     entries.sort(key=lambda e: (e["w"], e["ngeli"]))
-    cols = ["w", "ngeli", "n", "pl", "inv", "proper", "variant"]
+    cols = ["w", "ngeli", "n", "pl", "inv", "proper", "variant", "anim"]
     out = {
         "meta": {
-            "source": "Kamusi Teule ya Kiswahili, 3rd ed. (EAEP). Headwords, ngeli and "
-                      "explicit plurals only; definitions are not stored.",
+            "source": "Kamusi Teule ya Kiswahili, 3rd ed. (EAEP). Headwords, ngeli, explicit "
+                      "plurals and an animacy flag derived from each definition's opening words; "
+                      "definitions are not stored.",
             "generated": date.today().isoformat(),
             "columns": cols,
             "stats": {k: v for k, v in stats.items() if not k.startswith("tag:")},

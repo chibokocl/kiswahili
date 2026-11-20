@@ -63,12 +63,22 @@ look up any word (noun class, verb breakdown, adjective forms).
 
 Each `Issue` has a character span, rule id, category, severity, an explanation in English
 and Kiswahili, ranked suggestions and a confidence; `check(min_confidence=0.6)` filters.
-Rules today: `AGR-SV` (subject-verb agreement), `AGR-NA` (noun + adjective/numeral/possessive/connective *-a*), `SPELL`, `CAP`. The checker is
+Rules today: `AGR-SV` (subject-verb agreement), `AGR-NA` (noun + adjective/numeral/possessive/connective *-a*), `PREP-KWA` (*kwa* before a place after a verb of motion), `STD-IMP` (*enda* → *nenda*), `SPELL`, `CAP`. The checker is
 precision-first: it deliberately skips patterns that are correct Kiswahili but look wrong
 (animate nouns taking a-/wa-, respect plurals, adverbial nouns like *leo*, vocatives).
 
 Measure it with `python tools/evaluate_checker.py`. See [ROADMAP.md](../ROADMAP.md) for what is
 measured, what is not, and what comes next.
+
+## Animacy
+
+Animate nouns take a-/wa- agreement whatever their prefix (*kijana mzuri*, *simba anakuja*), so a
+checker that flags *kitabu mzuri* must know *kitabu* is inanimate. The noun lexicon stores an
+animacy flag derived from the opening words of each definition (*mtu…*, *mnyama…*, *aina ya ndege*
+vs *chombo cha…*, *hali ya…*); only the flag is kept, never the definition.
+`NounLexicon.is_inanimate(word)` is true when the dictionary lists no a-/wa- reading and no animate
+sense. Both `AGR-SV` and `AGR-NA` use it, so *Kitabu mzuri* → *kizuri* and *Kitabu wa mtoto* → *cha*
+are flagged while *Kijana mzuri* is left alone.
 
 ## Adjective lexicon and concord
 

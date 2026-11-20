@@ -26,11 +26,8 @@ from datetime import date
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_noun_lexicon import extract_text  # noqa: E402
+from build_noun_lexicon import extract_text, ANY_ENTRY  # noqa: E402
 
-POS = r"(?:nm|kt|kv|kl|ki|kh|ku|kw)"
-ANY_ENTRY = re.compile(
-    r"(?m)^[^\s|()]+?\d{0,2}[ \t]+(?:Pia,[^\n]{0,40}?|\([^)\n]*\)[ \t]+)?\b" + POS + r"\b")
 VERB = re.compile(
     r"(?m)^(?P<head>[^\s|()]+?)(?P<hom>\d{1,2})?[ \t]+(?P<mid>(?:Pia,[^\n]{0,40}?|\([^)\n]*\))?)"
     r"[ \t]*\bkt\b[ \t]*(?P<tr>-(?:ele|sie)-(?:[ \t]*/[ \t]*-(?:ele|sie)-)?)?")

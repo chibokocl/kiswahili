@@ -64,6 +64,22 @@ class TestRule(unittest.TestCase):
         self.assertEqual(self.fixes("Alipanda miti mzuri."), [("mzuri", "mizuri")])
         self.assertEqual(self.fixes("Mtoto kizuri alikuja."), [("kizuri", "mzuri")])
 
+    def test_inanimate_noun_with_class_1_form_is_flagged(self):
+        self.assertEqual(self.fixes("Kitabu mzuri kimeanguka."), [("mzuri", "kizuri")])
+        self.assertEqual(self.fixes("Aliona kikombe mzuri."), [("mzuri", "kizuri")])
+        self.assertEqual(self.fixes("Nilinunua kitabu wa mtoto."), [("wa", "cha")])
+
+    def test_animate_nouns_keep_class_1_concord(self):
+        for s in ["Kijana mzuri amefika.", "Simba mkubwa anakuja.", "Mbwa mdogo analala.",
+                  "Aliona kuku mzuri.", "Nilimwona jitu kubwa."]:
+            self.assertEqual(self.fixes(s), [], s)
+
+    def test_related_span_points_at_the_noun(self):
+        text = "Kitabu mzuri kimeanguka."
+        (issue,) = [i for i in self.chk.check(text) if i.rule == "AGR-NA"]
+        (rel,) = issue.related
+        self.assertEqual((text[rel["start"]:rel["end"]], rel["role"]), ("Kitabu", "noun"))
+
     def test_correct_phrases_are_silent(self):
         for s in ["Kitabu kizuri kimeanguka.", "Alipanda miti mizuri.", "Watoto wadogo wanacheza.",
                   "Nyumba nzuri ni kubwa.", "Alinunua vitabu vitatu.", "Kitabu cha mtoto.",
@@ -74,6 +90,7 @@ class TestRule(unittest.TestCase):
         traps = {
             "animate noun, class 1 concord": "Ng'ombe mkubwa analala.",
             "human noun in 7/8": "Kijana mzuri amefika.",
+            "animal in 9/10 listed with a-/wa-": "Ng'ombe mzuri amekufa.",
             "respect plural": "Mwalimu wetu wapya wamefika.",
             "preposition kwa": "Alienda nyumbani kwa mwalimu.",
             "genitive chain": "Mwalimu wa shule nzuri amefika.",

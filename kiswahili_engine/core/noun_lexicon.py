@@ -46,6 +46,7 @@ class NounEntry:
     invariable: bool = False
     proper: bool = False
     variant: bool = False
+    animate: Optional[bool] = None     # from the definition; None = not stated
 
     @property
     def confidence(self) -> float:
@@ -102,7 +103,8 @@ class NounLexicon:
         word, ngeli, number = e["w"], e["ngeli"], e["n"]
         common = dict(lemma=word, ngeli=ngeli, plural=e.get("pl"),
                       invariable=bool(e.get("inv")), proper=bool(e.get("proper")),
-                      variant=bool(e.get("variant")))
+                      variant=bool(e.get("variant")),
+                      animate=None if e.get("anim") is None else bool(e.get("anim")))
         self._put(word, NounEntry(word=word, number=number, source="headword", **common))
         self._headwords += 1
         if number != "singular":
@@ -149,6 +151,14 @@ class NounLexicon:
                 seen.add((e.ngeli, e.number))
                 out.append((e.ngeli, e.number))
         return out
+
+    def is_inanimate(self, word: str) -> bool:
+        """True when the dictionary gives no animate reading: no a-/wa- (1/2) listing and no
+        animate definition.  Animate nouns take a-/wa- agreement whatever their prefix
+        (kijana mzuri, simba anakuja); inanimate ones do not (kitabu kizuri)."""
+        found = self.lookup(word)
+        return bool(found) and not any(
+            e.ngeli in ("1/2", "1a/2a") or e.animate for e in found)
 
     def __contains__(self, word: str) -> bool:
         return bool(self.lookup(word))

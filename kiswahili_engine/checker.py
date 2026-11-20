@@ -17,6 +17,8 @@ Rules
 ``SPELL``    likely misspelling, with ranked corrections
 ``AGR-NA``   noun-modifier concord: adjectives, numerals, possessives, connective -a
              ("kitabu mzuri" -> kizuri, "kitabu wa mtoto" -> cha mtoto)
+``PREP-KWA`` "kwa" before a place after a verb of motion ("enda kwa kituo" -> kwenye kituo / kituoni)
+``STD-IMP``  non-standard imperative ("enda" -> "nenda")
 ``CAP``      sentence-initial capital
 
 Deliberate blind spots (to avoid false alarms): animate nouns of any class may take
@@ -73,11 +75,20 @@ NOUN_PREFIXES = ("wa", "mi", "ma", "ki", "vi", "ch", "vy", "ji", "mw", "mu", "m"
 CONNECTIVES = {"wa", "ya", "la", "cha", "vya", "za", "kwa", "pa", "mwa"}
 # forms in these classes only are often just prepositions (kwa, pa, mwa) -- never flag them
 LOCATIVE = {"15", "16", "17", "18"}
-# classes whose nouns are practically never animate (no a-/wa- concord to forgive)
-INANIMATE_ONLY = {"3", "4", "11", "14", "15", "16", "17", "18"}
 
 # subject marker (+ tense) + relative particle with no root: walio, ambayo-like fragments
 RELATIVE_PARTICLE = re.compile(r"^(wa|a|u|i|li|ya|ki|vi|zi|ku|pa|mu)(li|na|ta|me)?(ye|o|yo|lo|cho|vyo|zo|ko|po|mo)$")
+
+# Verb roots meaning go / come / return / arrive / enter / pass (kwa + place is wrong after these)
+MOTION_ROOTS = {"end", "nend", "j", "rud", "rudi", "fik", "ing", "ingi", "pit", "safir"}
+# Common place nouns (hand-curated: the dictionary has no place flag, and lacks e.g. 'kituo').
+# 'kwa' belongs with people (kwa daktari); places take 'kwenye' or the locative -ni.
+PLACE_NOUNS = {
+    "kituo", "shule", "soko", "hospitali", "zahanati", "kanisa", "msikiti", "ofisi", "benki",
+    "duka", "mji", "kijiji", "shamba", "bustani", "uwanja", "nyumba", "chumba", "maktaba",
+    "kiwanda", "gereza", "mahakama", "bandari", "kisiwa", "mtaa", "mgahawa", "hoteli",
+    "chuo", "darasa", "jiko", "choo", "bafu", "pwani", "mlima", "mto", "ziwa", "msitu",
+}
 
 ROMAN = re.compile(r"^[ivxlc]+$", re.I)
 
@@ -100,6 +111,8 @@ class Issue:
     message_sw: str
     suggestions: List[Suggestion] = field(default_factory=list)
     confidence: float = 0.0
+    # other words the issue is about (the noun a modifier must agree with), for highlighting
+    related: List[Dict] = field(default_factory=list)
 
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -132,18 +145,35 @@ def _norm(w: str) -> str:
     return w.lower().replace("’", "'")
 
 
-def _edit_distance(a: str, b: str, limit: int) -> int:
-    """Levenshtein with early exit; returns limit+1 when the distance exceeds ``limit``."""
-    if abs(len(a) - len(b)) > limit:
+def _edit_distance(a: str, b: str, limit: float) -> float:
+    """Edit cost tuned to typing errors, with early exit (returns > limit when too far).
+
+    Insert/delete/substitute cost 1, except that adding or dropping a *doubled* letter
+    (kiuu <-> kiu) costs 0.4 and a transposition (kitabu <-> kiatbu) costs 0.8.
+    """
+    if abs(len(a) - len(b)) > limit + 1:
         return limit + 1
-    prev = list(range(len(b) + 1))
-    for i, ca in enumerate(a, 1):
-        cur = [i]
-        for j, cb in enumerate(b, 1):
-            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+
+    def dup(s: str, i: int) -> float:
+        return 0.4 if (i > 0 and s[i - 1] == s[i]) or (i + 1 < len(s) and s[i + 1] == s[i]) else 1.0
+
+    n, m = len(a), len(b)
+    prev2 = None
+    prev = [0.0]
+    for j in range(1, m + 1):
+        prev.append(prev[-1] + dup(b, j - 1))
+    for i in range(1, n + 1):
+        cur = [prev[0] + dup(a, i - 1)]
+        for j in range(1, m + 1):
+            best = min(prev[j] + dup(a, i - 1),                 # delete a[i-1]
+                       cur[j - 1] + dup(b, j - 1),              # insert b[j-1]
+                       prev[j - 1] + (0.0 if a[i - 1] == b[j - 1] else 1.0))
+            if prev2 is not None and i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                best = min(best, prev2[j - 2] + 0.8)            # transposition
+            cur.append(best)
         if min(cur) > limit:
             return limit + 1
-        prev = cur
+        prev2, prev = prev, cur
     return prev[-1]
 
 
@@ -158,9 +188,14 @@ class Checker:
         self.min_freq = min_freq
         self.freq = freq
         self.concord = ConcordLexicon.load()
+        # prefix-only guess at a noun's morphological class (jitu -> 5/6, kijana -> 7/8)
+        self._prefix_ns = EnhancedNgeliSystem(verb_parser=self.ns.verb_parser, use_noun_lexicon=False)
         self.known: Set[str] = {w for w, n in freq.items() if n >= min_freq and w.isalpha()}
         self._by_len: Dict[int, List[str]] = {}
-        for w in self.known:
+        pool = set(self.known)
+        if self.ns.noun_lexicon:          # dictionary nouns count as suggestions even if rare in the corpus
+            pool |= {w for w in self.ns.noun_lexicon._index if w.isalpha() and len(w) > 2}
+        for w in pool:
             self._by_len.setdefault(len(w), []).append(w)
         self._suggest_cache: Dict[str, List[Tuple[str, int]]] = {}
         # stems of known nouns, so noun-class variants (watekelezaji ~ utekelezaji) are accepted
@@ -177,6 +212,8 @@ class Checker:
         issues += self._rule_capitalization(tokens, text)
         issues += self._rule_agreement(tokens)
         issues += self._rule_concord(tokens, text)
+        issues += self._rule_prepositions(tokens, text)
+        issues += self._rule_standard_forms(tokens)
         issues += self._rule_spelling(tokens)
         issues = [i for i in issues if i.confidence >= min_confidence]
         issues.sort(key=lambda i: (i.start, i.end))
@@ -217,7 +254,7 @@ class Checker:
             sw = _norm(subj.text)
             if sw in ADVERBIAL_NOUNS or sw in DETERMINERS or sw.endswith("ni"):
                 continue
-            readings = lex.candidates(sw)
+            readings = self._readings(sw)
             if not readings:
                 continue
             parse = vp.best(verb.text)
@@ -242,8 +279,9 @@ class Checker:
             human = [r for r in readings if r[0] in ("1/2", "1a/2a")]
             marker_classes = set(parse.subject_labels)
             if not human:
-                # animate nouns of any class take a-/wa- agreement
-                if marker_classes & {"1", "2"}:
+                # animate nouns of any class take a-/wa- agreement; only a noun the
+                # dictionary shows to be inanimate (kitabu) can be flagged for it
+                if marker_classes & {"1", "2"} and not lex.is_inanimate(sw):
                     continue
             else:
                 # singular human noun + plural verb = respect plural (Mwalimu wamefika)
@@ -263,8 +301,22 @@ class Checker:
                 f"'{new_marker}-', not '{marker}-'.",
                 f"'{subj.text}' ni ya ngeli ya {target[0]}; kitenzi kianze kwa '{new_marker}-', "
                 f"si '{marker}-'.",
-                [Suggestion(fixed, f"agrees with '{subj.text}'")], confidence))
+                [Suggestion(fixed, f"agrees with '{subj.text}'")], confidence,
+                related=[{"start": subj.start, "end": subj.end, "text": subj.text, "role": "subject"}]))
         return out
+
+    def _readings(self, word: str) -> List[Tuple[str, str]]:
+        """(ngeli, number) readings: the lexicon's, else an unattested ma- plural of a known
+        word (masoda <- soda) read as 5/6 plural.  Attested words (mapema) never get this."""
+        lex = self.ns.noun_lexicon
+        found = lex.candidates(word) if lex else []
+        if found:
+            return found
+        if (word.startswith("ma") and len(word) >= 6 and self.freq.get(word, 0) < 3
+                and word[2] not in "aeiou"
+                and (word[2:] in self.known or (lex and word[2:] in lex))):
+            return [("5/6", "plural")]
+        return []
 
     # ------------------------------------------------------------------ AGR-NA
     @staticmethod
@@ -292,7 +344,7 @@ class Checker:
             if (noun.text[0].isupper() and not noun.first_in_sentence) or nw in DETERMINERS \
                     or nw in ADVERBIAL_NOUNS or nw.endswith("ni"):
                 continue
-            readings = lex.candidates(nw)
+            readings = self._readings(nw)
             forms = self.concord.lookup(mod.text)
             if not readings or not forms or lex.lookup(mod.text):
                 continue                                   # unknown noun / not a concord word
@@ -302,15 +354,25 @@ class Checker:
             if mod_classes <= LOCATIVE:
                 continue                                   # kwa, pa, mwa: usually prepositions
             if i > 0 and tokens[i - 1].sentence == noun.sentence:
-                # the modifier may belong to the word before the noun (kitega uchumi vyao)
-                prev = self.ns.identify_ngeli_enhanced(_norm(tokens[i - 1].text))
-                if prev and set(self._classes([(prev.ngeli_class, "singular"),
-                                               (prev.ngeli_class, "plural")])) & mod_classes:
-                    continue
+                # the modifier may belong to the word before the noun (kitega uchumi vyao);
+                # only words that could be nouns count -- not verbs or short function words
+                pw = _norm(tokens[i - 1].text)
+                if len(pw) > 3 and not self.ns.verb_parser.is_finite_verb(pw) \
+                        and not self.concord.lookup(pw):
+                    prev = self.ns.identify_ngeli_enhanced(pw)
+                    if prev and set(self._classes([(prev.ngeli_class, "singular"),
+                                                   (prev.ngeli_class, "plural")])) & mod_classes:
+                        continue
             noun_classes = self._classes(readings)
             if set(noun_classes) & mod_classes:
                 continue                                   # agrees
-            if mod_classes & {"1", "2"} and not set(noun_classes) <= INANIMATE_ONLY:
+            if any(r[0] in ("1/2", "1a/2a") for r in readings):
+                # animate nouns also take the concord of their own prefix class (jitu kubwa)
+                pre = self._prefix_ns.identify_ngeli_enhanced(nw)
+                if pre and set(self._classes([(pre.ngeli_class, "singular"),
+                                              (pre.ngeli_class, "plural")])) & mod_classes:
+                    continue
+            if mod_classes & {"1", "2"} and not lex.is_inanimate(nw):
                 continue                                   # animate noun of any class: a-/wa- concord
             if set(noun_classes) == {"1"} and "2" in mod_classes:
                 continue                                   # respect plural: Mwalimu wetu wapya
@@ -332,7 +394,62 @@ class Checker:
                 f"'{noun.text}' ni ya ngeli ya {target}; neno hili lipaswe kuwa '{fixed}', "
                 f"si '{mod.text}'.",
                 [Suggestion(fixed, f"agrees with '{noun.text}'")],
-                0.85 if len(noun_classes) == 1 else 0.75))
+                0.85 if len(noun_classes) == 1 else 0.75,
+                related=[{"start": noun.start, "end": noun.end, "text": noun.text, "role": "noun"}]))
+        return out
+
+    # ------------------------------------------------------------------ PREP-KWA
+    def _is_motion_verb(self, word: str) -> bool:
+        for p in self.ns.verb_parser.parse(word)[:4]:
+            if p.root in MOTION_ROOTS and p.score >= 0.4 \
+                    and p.form in ("finite", "infinitive", "imperative"):
+                return True
+        return False
+
+    def _rule_prepositions(self, tokens: List[_Token], text: str) -> List[Issue]:
+        out = []
+        for i in range(1, len(tokens) - 1):
+            verb, kwa, place = tokens[i - 1], tokens[i], tokens[i + 1]
+            if _norm(kwa.text) != "kwa" or not (verb.sentence == kwa.sentence == place.sentence):
+                continue
+            if text[verb.end:kwa.start].strip() or text[kwa.end:place.start].strip():
+                continue                                   # punctuation in between
+            noun = _norm(place.text)
+            if noun not in PLACE_NOUNS or not self._is_motion_verb(verb.text):
+                continue
+            after = _norm(tokens[i + 2].text) if i + 2 < len(tokens) \
+                and tokens[i + 2].sentence == place.sentence else ""
+            options = [Suggestion(f"kwenye {place.text}", "place after a verb of motion")]
+            if after not in CONNECTIVES:                   # kituoni cha afya would be wrong
+                options.append(Suggestion(place.text + "ni", "locative -ni"))
+            out.append(Issue(
+                kwa.start, place.end, text[kwa.start:place.end], "PREP-KWA", "preposition",
+                "warning",
+                f"After a verb of motion, 'kwa' is used with people (kwa daktari). "
+                f"For a place say 'kwenye {place.text}'"
+                + ("" if after in CONNECTIVES else f" or '{place.text}ni'") + ".",
+                f"'kwa' hutumika na watu (kwa daktari); mahali pasemwe 'kwenye {place.text}'"
+                + ("" if after in CONNECTIVES else f' au \'{place.text}ni\'') + ".",
+                options, 0.8,
+                related=[{"start": verb.start, "end": verb.end, "text": verb.text, "role": "verb"}]))
+        return out
+
+    # ------------------------------------------------------------------ STD-IMP
+    def _rule_standard_forms(self, tokens: List[_Token]) -> List[Issue]:
+        out = []
+        for i, t in enumerate(tokens):
+            if t.text.lower() != "enda":
+                continue
+            opens = t.first_in_sentence or (
+                i > 0 and tokens[i - 1].sentence == t.sentence and _norm(tokens[i - 1].text) == "tafadhali")
+            if not opens:                                  # 'enda' elsewhere may be a stem/other form
+                continue
+            fixed = "Nenda" if t.text[0].isupper() else "nenda"
+            out.append(Issue(
+                t.start, t.end, t.text, "STD-IMP", "standard", "info",
+                "The standard imperative of kwenda is 'nenda'; 'enda' is older or biblical style.",
+                "Amri ya 'kwenda' katika Kiswahili sanifu ni 'nenda'.",
+                [Suggestion(fixed)], 0.65))
         return out
 
     # ------------------------------------------------------------------ SPELL
@@ -367,15 +484,27 @@ class Checker:
             return True
         if w in self.known or (self.ns.noun_lexicon and w in self.ns.noun_lexicon):
             return True
+        if self._is_locative(w):
+            return True
         return self._plausible_verb(w) or self._is_noun_variant(w)
 
-    def suggest(self, word: str, limit: int = 3) -> List[Tuple[str, int]]:
-        """Nearest known words as (word, distance), most likely first."""
+    def _is_locative(self, w: str) -> bool:
+        """Locative -ni: shuleni, kituoni, hospitalini, mjini ('mji' + ni)."""
+        if not w.endswith("ni") or len(w) < 5:
+            return False
+        lex = self.ns.noun_lexicon
+        for stem in (w[:-2], w[:-2] + "o", w[:-2] + "e", w[:-2] + "a"):  # nyumbani, soko-ni ...
+            if stem in self.known or (lex and stem in lex):
+                return True
+        return False
+
+    def suggest(self, word: str, limit: int = 3) -> List[Tuple[str, float]]:
+        """Nearest known words as (word, cost), most likely first."""
         if word in self._suggest_cache:
             return self._suggest_cache[word][:limit]
-        max_d = 1 if len(word) <= 4 else 2
+        max_d = 1.0 if len(word) <= 4 else 2.0
         cands = []
-        for L in range(len(word) - max_d, len(word) + max_d + 1):
+        for L in range(max(len(word) - 2, 3 if len(word) >= 4 else 1), len(word) + 3):
             for w in self._by_len.get(L, ()):
                 d = _edit_distance(word, w, max_d)
                 if d <= max_d:
@@ -383,7 +512,7 @@ class Checker:
         cands.sort()
         res = [(w, d) for d, _, w in cands]
         self._suggest_cache[word] = res
-        return res[:limit]
+        return res[:limit] if limit else res
 
     def _rule_spelling(self, tokens: List[_Token]) -> List[Issue]:
         out = []
@@ -396,7 +525,7 @@ class Checker:
             # neighbour are far more likely to be rare words, foreign words or names.
             if sugg:
                 best = sugg[0]
-                confidence = 0.8 if best[1] == 1 else 0.65
+                confidence = 0.8 if best[1] <= 1 else 0.65
                 out.append(Issue(
                     t.start, t.end, t.text, "SPELL", "spelling", "warning",
                     f"'{t.text}' is not a known word. Did you mean '{best[0]}'?",

@@ -28,8 +28,9 @@ def lookup(chk: Checker, word: str) -> dict:
         "word": w,
         "known_word": bool(w) and chk._is_known(w, w),
         "corpus_frequency": chk.freq.get(w, 0),
-        "noun": [{"lemma": e.lemma, "ngeli": e.ngeli, "number": e.number, "source": e.source}
-                 for e in (ns.noun_lexicon.lookup(w) if ns.noun_lexicon else [])],
+        "noun": [{"lemma": e.lemma, "ngeli": e.ngeli, "number": e.number, "source": e.source,
+                  "animate": e.animate} for e in (ns.noun_lexicon.lookup(w) if ns.noun_lexicon else [])],
+        "inanimate": bool(ns.noun_lexicon and ns.noun_lexicon.is_inanimate(w)),
         "verb": [{**p.to_dict(), "morphemes": p.morphemes()} for p in verb if p.score >= 0.5],
         "concord": [{"stem": f.stem, "kind": f.kind, "class": f.cls} for f in chk.concord.lookup(w)],
         "invariable_adjective": chk.concord.is_invariable(w),

@@ -9,20 +9,20 @@ writing assistant lives or dies on false alarms, so every step is judged by prec
 | Layer | Status |
 |---|---|
 | Verb morphology (`VerbParser`) | Slot parser + 3.7k dictionary roots with attested extensions. Recovers the dictionary-attested root for 78% of derived forms (86% give a dictionary-licensed analysis). |
-| Noun lexicon (`NounLexicon`) | 13k headwords with ngeli and plurals. Covers ~1/3 of tokens in a sample text. |
+| Noun lexicon (`NounLexicon`) | 13k headwords with ngeli, plurals and an **animacy flag** derived from each definition (2.8k animate, 7.4k inanimate, 2.8k unknown). Covers ~1/3 of tokens in a sample text. |
 | Adjective concord (`ConcordLexicon`) | 61 adjective stems (dictionary + curated) and generated class forms for adjectives, possessives, *-a*, *-ote*. |
-| Checker (`Checker`) | `AGR-SV`, `AGR-NA`, `SPELL`, `CAP` with spans, bilingual messages, fixes. |
+| Checker (`Checker`) | `AGR-SV`, `AGR-NA`, `PREP-KWA`, `STD-IMP`, `SPELL`, `CAP` with spans, bilingual messages, fixes. |
 | Try it | `python -m kiswahili_engine.server` -> one-page browser tester. |
 | Evaluation (`tools/evaluate_checker.py`) | Clean-text false alarms + synthetic detection/fix accuracy. |
 
 ### Numbers (run `python tools/evaluate_checker.py`)
 
 * **Clean text** (Arusha Declaration, 5.3k words): 0 agreement (verb or adjective) / capitalisation false alarms,
-  1.9 spelling flags per 1000 words (some may be genuine typos in the source). That text is
+  2.1 spelling flags per 1000 words (some may be genuine typos in the source). That text is
   also part of the spelling corpus, so the spelling figure is optimistic.
 * **Synthetic errors** are built from the same lexicons the checker uses, so they only prove the
-  logic works end to end (verb agreement: 100% detected and fixed; adjective concord: 87% detected, 100% of those fixed; single-edit typos: ~81% flagged,
-  top-3 suggestion contains the right word ~92% of the time). **They are not a measure of real-world
+  logic works end to end (verb agreement: 100% detected and fixed; adjective concord: 90% detected, 100% of those fixed; single-edit typos: ~81% flagged,
+  the right word is the first suggestion ~90% and in the top three ~99% of the time). **They are not a measure of real-world
   quality.**
 
 ## Next, in priority order
@@ -31,10 +31,6 @@ writing assistant lives or dies on false alarms, so every step is judged by prec
    real clean text that is *not* in the spelling corpus. Until then true precision and recall
    are unknown. Every item below should land with cases in this set.
 2. **More precise rules** (each needs a lexicon, so extract from the dictionary like nouns/verbs):
-   * **animacy**: `*kitabu mzuri` / `*kitabu wa mtoto` are not flagged today because `kijana mzuri`
-     (7/8, human) is correct and the lexicon doesn't know which nouns are animate. Deriving an
-     animacy flag from the dictionary definitions (mtu, mnyama, ndege ...) would unlock the most
-     common concord errors;
    * demonstrative concord (`*kitabu huyu`), non-adjacent modifiers, more adjective stems;
    * tense/negation form errors (`*sipendi`, `*hakupenda` confusions), missing `ku-` on
      monosyllabic verbs (`*anakla`), subject-pronoun / verb-marker mismatch (`*Mimi unasoma`);
@@ -51,6 +47,8 @@ writing assistant lives or dies on false alarms, so every step is judged by prec
    rule-based vs model-assisted translation) is needed before translation features.
 
 ## Known limits
+
+* Animacy: a noun counts as inanimate only if the dictionary lists no a-/wa- (1/2) reading and no animate definition. In a 45-word sample of unknown-animacy nouns none were animate, but this is a sample, not a measurement. Animate nouns also take the concord of their own prefix class (*jitu kubwa*), which the rule accepts.
 
 * Verb parser: no reversive/positional extensions, reduplication, `amba-` relatives, `-ile` perfect.
 * Noun lexicon: dictionary omissions (e.g. `nyumba`), ~130 entries lost to PDF column layout.

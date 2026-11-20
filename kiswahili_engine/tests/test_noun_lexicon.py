@@ -58,6 +58,28 @@ class TestNounLexicon(unittest.TestCase):
         self.assertNotIn("anakula", self.lex)
 
 
+class TestAnimacy(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.lex = NounLexicon.load()
+
+    def test_inanimate(self):
+        for w in ("kitabu", "mti", "kikombe", "jiwe", "chakula", "shule", "mpira"):
+            self.assertTrue(self.lex.is_inanimate(w), w)
+
+    def test_animate_nouns_are_not_inanimate_whatever_their_prefix(self):
+        # the dictionary lists these with a-/wa- agreement despite ki-/ji-/n- prefixes
+        for w in ("kijana", "simba", "mbwa", "kuku", "mtoto", "samaki", "jitu", "ng'ombe"):
+            self.assertFalse(self.lex.is_inanimate(w), w)
+
+    def test_unknown_word_is_not_called_inanimate(self):
+        self.assertFalse(self.lex.is_inanimate("zzzzqx"))
+
+    def test_entry_carries_the_flag(self):
+        (e,) = [e for e in self.lex.lookup("kitabu") if e.ngeli == "7/8"]
+        self.assertIn(e.animate, (None, False))
+
+
 class TestEngineUsesLexicon(unittest.TestCase):
     def test_identification(self):
         ns = EnhancedNgeliSystem()
@@ -133,6 +155,29 @@ class TestBuilderParser(unittest.TestCase):
         got, _ = self.parse("kuzi2 nm |a-/wa) aina ya\nkiambo nm (viambo) ki-/vi-| kijiji.\n")
         self.assertIn(("kuzi", "1/2"), got)
         self.assertIn(("kiambo", "7/8"), got)
+
+    def test_animacy_from_definition(self):
+        got, stats = self.parse(
+            "simbamarara nm |i-/zi-| mnyama mkubwa mla nyama\n"
+            "kiberiti nm |ki-/vi-| kifaa cha kuwashia moto\n"
+            "kisaka nm |ki-/vi-| aina ya ndege mdogo\n"
+            "kichuguu nm |ki-/vi-| mdudu mdogo\n"
+            "kitabu nm |ki-/vi-| 1. kurasa zilizounganishwa\n"
+            "kaa nm |li-/ya-| mnyama wa baharini\n"
+            "kaa2 nm |li-/ya-| aina ya kaa\n")
+        self.assertEqual(got[("simbamarara", "9/10")]["anim"], 1)
+        self.assertEqual(got[("kiberiti", "7/8")]["anim"], 0)
+        self.assertEqual(got[("kisaka", "7/8")]["anim"], 1)
+        self.assertIsNone(got[("kitabu", "7/8")]["anim"])       # unknown, not guessed
+        self.assertEqual(got[("kaa", "5/6")]["anim"], 1)
+
+    def test_class_1_2_is_animate_by_tag(self):
+        got, _ = self.parse("kijana nm |a-/wa-| mtu mchanga\n")
+        self.assertEqual(got[("kijana", "1/2")]["anim"], 1)
+
+    def test_definitions_are_not_stored(self):
+        got, _ = self.parse("kiberiti nm |ki-/vi-| kifaa cha kuwashia moto\n")
+        self.assertFalse(any("kuwashia" in str(v) for v in got[("kiberiti", "7/8")].values()))
 
     def test_tag_mapping(self):
         self.assertEqual(self.b.TAG_MAP[self.b.normalise_tag("ya-/ya-")][:2], ("5/6", "plural"))

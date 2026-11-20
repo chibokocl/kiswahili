@@ -10,11 +10,16 @@
   button { font: inherit; padding: .3rem .8rem; cursor: pointer; }
   .row { margin: .6rem 0; display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
   .examples button { font-size: .85rem; }
-  #marked { white-space: pre-wrap; border: 1px solid #ccc; padding: .6rem; min-height: 3rem; border-radius: 4px; }
-  mark { cursor: pointer; border-radius: 3px; padding: 0 1px; }
-  mark.agreement { background: #ffd7d7; } mark.spelling { background: #fff1b8; } mark.capitalization { background: #d6e8ff; }
+  #marked { white-space: pre-wrap; border: 1px solid #ccc; padding: .6rem; min-height: 3rem; border-radius: 4px; line-height: 1.8; }
+  mark { cursor: pointer; border-radius: 3px; padding: 0 2px; color: inherit; }
+  mark.agreement { background: #ffc9c9; } mark.spelling { background: #ffe9a0; } mark.capitalization { background: #cfe3ff; } mark.preposition { background: #e3d4ff; } mark.standard { background: #d4f1d9; }
+  .rel { border-bottom: 2px dotted #666; background: #efefef; border-radius: 3px; padding: 0 2px; }
+  .active { outline: 2px solid #1a1a1a; }
+  .legend { font-size: .85rem; color: #555; display: flex; gap: 1rem; flex-wrap: wrap; margin: .4rem 0; }
+  .legend span { padding: 0 .4rem; border-radius: 3px; }
   .issue { border-left: 4px solid #999; padding: .3rem .6rem; margin: .5rem 0; background: #fafafa; }
-  .issue.agreement { border-color: #d33; } .issue.spelling { border-color: #cc9a00; } .issue.capitalization { border-color: #3a7bd5; }
+  .issue.agreement { border-color: #d33; } .issue.spelling { border-color: #cc9a00; } .issue.capitalization { border-color: #3a7bd5; } .issue.preposition { border-color: #8a5bd6; } .issue.standard { border-color: #3a9a55; }
+  .issue.active { outline: 2px solid #1a1a1a; background: #fff; }
   .tag { font-size: .75rem; background: #eee; border-radius: 3px; padding: 0 .35rem; margin-right: .4rem; }
   .sw { color: #555; font-size: .9rem; }
   .fix { margin-right: .4rem; }
@@ -25,9 +30,9 @@
 </head>
 <body>
 <h1>Kiswahili Checker</h1>
-<p class="muted">Type or paste Kiswahili. Issues are highlighted; click a highlight or a suggestion to apply the fix.</p>
+<p class="muted">Type or paste Kiswahili. Issues are highlighted; hover a highlight or a card to link them, click a suggestion to apply the fix.</p>
 
-<textarea id="text" spellcheck="false">kitabu umeanguka. Watoto anacheza mpira na miti mzuri. Alikwenda shule kila sikuu.</textarea>
+<textarea id="text" spellcheck="false">kitabu umeanguka. Watoto anacheza mpira na miti mzuri. Kitabu wa mtoto. Alikwenda shule kila sikuu.</textarea>
 <div class="row">
   <button id="check">Check</button>
   <button id="fixall">Apply all fixes</button>
@@ -38,31 +43,45 @@
   <button data-t="Kitabu kimeanguka. Mtoto anakula chakula. Watoto wanacheza mpira.">correct text (no issues)</button>
   <button data-t="Kitabu umeanguka. Watoto anacheza mpira.">verb agreement</button>
   <button data-t="Alipanda miti mzuri. Mtoto kizuri alikuja.">adjective agreement</button>
+  <button data-t="Kitabu mzuri kimeanguka. Kijana mzuri amefika. Nilinunua kitabu wa mtoto. Simba mkubwa anakuja. Kitabu wanasoma.">animacy</button>
   <button data-t="Ng'ombe mkubwa analala. Mwalimu wamefika. Leo anakuja. Kijana mzuri amefika.">looks wrong, is fine</button>
   <button data-t="Alikwenda shule kila sikuu. mtoto anasoma.">spelling / capital</button>
+  <button data-t="Mwanamke wangu ana nyege. Tafadhali enda kwa kituo cha afya karibu kwako sasa.">prepositions / standard form</button>
 </div>
 
 <h2>Result</h2>
+<div class="legend">
+  <span style="background:#ffc9c9">agreement</span>
+  <span style="background:#ffe9a0">spelling</span>
+  <span style="background:#cfe3ff">capitalization</span>
+  <span style="background:#e3d4ff">preposition</span>
+  <span style="background:#d4f1d9">standard form</span>
+  <span class="rel">dotted = the word it must agree with</span>
+</div>
 <div id="marked"></div>
 <div id="issues"></div>
 
 <h2>Look up a word</h2>
-<div class="row"><input id="word" placeholder="e.g. anakula, mtoto, kizuri" style="padding:.3rem"><button id="lookup">Look up</button></div>
-<pre id="lookupout">noun class, verb breakdown, adjective form...</pre>
+<div class="row"><input id="word" placeholder="e.g. anakula, mtoto, kitabu, kizuri" style="padding:.3rem"><button id="lookup">Look up</button></div>
+<pre id="lookupout">noun class + animacy, verb breakdown, adjective forms...</pre>
 
 <script>
 const $ = id => document.getElementById(id);
-let issues = [], timer = null, seq = 0;
+let issues = [], checkedText = '', timer = null, seq = 0;
+
+async function post(text) {
+  const r = await fetch('/api/check', { method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ text, min_confidence: parseFloat($('conf').value) || 0 }) });
+  return r.json();
+}
 
 async function check() {
-  const my = ++seq;
+  const my = ++seq, sent = $('text').value;
   $('status').textContent = 'checking...';
   try {
-    const r = await fetch('/api/check', { method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ text: $('text').value, min_confidence: parseFloat($('conf').value) || 0 }) });
-    const data = await r.json();
-    if (my !== seq) return;                       // a newer request is in flight
-    issues = data.issues || [];
+    const data = await post(sent);
+    if (my !== seq || $('text').value !== sent) return;   // stale response: offsets would be wrong
+    issues = data.issues || []; checkedText = sent;
     render();
     $('status').textContent = issues.length + ' issue' + (issues.length === 1 ? '' : 's');
   } catch (e) { $('status').textContent = 'server not reachable'; }
@@ -74,22 +93,44 @@ function applyFix(issue, replacement) {
   check();
 }
 
+function setActive(idx, on) {
+  document.querySelectorAll('[data-i="' + idx + '"]').forEach(el => el.classList.toggle('active', on));
+}
+
 function render() {
-  const text = $('text').value, box = $('marked');
+  const text = checkedText, box = $('marked');
   box.textContent = '';
+  // main spans win over related spans; skip anything overlapping what is already placed
+  const segs = [];
+  issues.forEach((it, idx) => {
+    segs.push({ s: it.start, e: it.end, main: true, idx });
+    (it.related || []).forEach(r => segs.push({ s: r.start, e: r.end, main: false, idx, role: r.role }));
+  });
+  segs.sort((a, b) => (b.main - a.main) || (a.s - b.s));
+  const placed = [];
+  for (const g of segs) if (!placed.some(p => g.s < p.e && p.s < g.e)) placed.push(g);
+  placed.sort((a, b) => a.s - b.s);
+
   let pos = 0;
-  for (const i of issues) {
-    if (i.start < pos) continue;
-    box.append(text.slice(pos, i.start));
-    const m = document.createElement('mark');
-    m.className = i.category; m.textContent = text.slice(i.start, i.end); m.title = i.message;
-    if (i.suggestions.length) m.onclick = () => applyFix(i, i.suggestions[0].text);
-    box.append(m); pos = i.end;
+  for (const g of placed) {
+    box.append(text.slice(pos, g.s));
+    const it = issues[g.idx];
+    const el = document.createElement(g.main ? 'mark' : 'span');
+    el.textContent = text.slice(g.s, g.e);
+    el.dataset.i = g.idx;
+    if (g.main) { el.className = it.category; el.title = it.rule + ': ' + it.message; }
+    else { el.className = 'rel'; el.title = g.role + ' (' + it.rule + ')'; }
+    el.onmouseenter = () => setActive(g.idx, true);
+    el.onmouseleave = () => setActive(g.idx, false);
+    el.onclick = () => { const c = document.getElementById('issue-' + g.idx); if (c) c.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
+    box.append(el); pos = g.e;
   }
   box.append(text.slice(pos));
+
   const list = $('issues'); list.textContent = '';
-  for (const i of issues) {
-    const d = document.createElement('div'); d.className = 'issue ' + i.category;
+  issues.forEach((i, idx) => {
+    const d = document.createElement('div'); d.className = 'issue ' + i.category; d.id = 'issue-' + idx; d.dataset.i = idx;
+    d.onmouseenter = () => setActive(idx, true); d.onmouseleave = () => setActive(idx, false);
     const head = document.createElement('div');
     const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = i.rule + ' ' + i.confidence.toFixed(2);
     head.append(tag, i.message);
@@ -100,17 +141,13 @@ function render() {
       b.onclick = () => applyFix(i, s.text); d.append(b);
     }
     list.append(d);
-  }
+  });
 }
 
 $('check').onclick = check;
 $('text').oninput = () => { clearTimeout(timer); timer = setTimeout(check, 400); };
 $('conf').onchange = check;
-$('fixall').onclick = async () => {
-  const r = await fetch('/api/check', { method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ text: $('text').value, min_confidence: parseFloat($('conf').value) || 0 }) });
-  $('text').value = (await r.json()).corrected; check();
-};
+$('fixall').onclick = async () => { $('text').value = (await post($('text').value)).corrected; check(); };
 document.querySelectorAll('.examples button').forEach(b => b.onclick = () => { $('text').value = b.dataset.t; check(); });
 
 async function lookup() {

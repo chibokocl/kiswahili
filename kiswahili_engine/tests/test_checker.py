@@ -41,6 +41,13 @@ class TestChecker(unittest.TestCase):
         fixes = [i.suggestions[0].text for i in issues if i.rule == "AGR-SV"]
         self.assertEqual(fixes, ["hakitaanguka"])
 
+    def test_inanimate_noun_with_animate_verb_marker(self):
+        issues = self.chk.check("Kitabu anasoma.")
+        fixes = [i.suggestions[0].text for i in issues if i.rule == "AGR-SV"]
+        self.assertEqual(fixes, ["kinasoma"])
+        (rel,) = [i for i in issues if i.rule == "AGR-SV"][0].related
+        self.assertEqual(rel["role"], "subject")
+
     def test_correct_sentences_are_not_flagged(self):
         clean = [
             "Mtoto anakula chakula.",
@@ -56,6 +63,8 @@ class TestChecker(unittest.TestCase):
     def test_known_false_alarm_traps(self):
         traps = {
             "animate noun, a- agreement": "Ng'ombe analala.",
+            "animate noun in 7/8, a- agreement": "Kijana anacheza.",
+            "animate noun, plural wa- agreement": "Simba wanakuja.",
             "respect plural": "Mwalimu wamefika.",
             "adverbial noun opens sentence": "Leo anakuja.",
             "locative": "Nyumbani analala.",
@@ -84,6 +93,33 @@ class TestChecker(unittest.TestCase):
         self.assertEqual(issues[0].text, "sikuu")
         self.assertEqual(issues[0].suggestions[0].text, "siku")
 
+    def test_doubled_letter_typo_ranks_first(self):
+        # 'kiu' (thirst) is a rarer word than 'kitu', but dropping a doubled letter is the commonest typo
+        (issue,) = [i for i in self.chk.check("Nina kiuu sana.") if i.rule == "SPELL"]
+        self.assertEqual(issue.suggestions[0].text, "kiu")
+        self.assertNotIn("ki", [s.text for s in issue.suggestions])
+
+    def test_transposition_is_one_cheap_edit(self):
+        self.assertEqual(self.chk.suggest("kitabu"), self.chk.suggest("kitabu"))   # cached, stable
+        top = [w for w, _ in self.chk.suggest("shuleu", 5)]
+        self.assertIn("shule", top)
+        self.assertEqual([w for w, _ in self.chk.suggest("kiatbu", 3)][0], "kitabu")
+
+    def test_dictionary_nouns_can_be_suggested(self):
+        # 'kiu' is a dictionary noun; suggestions are not limited to corpus words
+        self.assertIn("kiu", [w for w, _ in self.chk.suggest("kiuu", 8)])
+
+    def test_unattested_ma_plural_gets_concord_checked(self):
+        issues = self.chk.check("Nilinunua masoda za baridi.")
+        (issue,) = [i for i in issues if i.rule == "AGR-NA"]
+        self.assertEqual(issue.suggestions[0].text, "ya")
+        self.assertEqual(issue.related[0]["text"], "masoda")
+        self.assertEqual([r for r, _ in self.rules("Nilinunua masoda ya baridi.")], [])
+
+    def test_attested_ma_words_are_not_treated_as_plural_nouns(self):
+        for s in ["Alifika mapema sana.", "Alikuja mapema kwa kazi."]:
+            self.assertEqual([r for r, _ in self.rules(s) if r == "AGR-NA"], [], s)
+
     def test_valid_forms_not_flagged(self):
         ok = [
             "Hatupendi kula.",                       # negative verb
@@ -101,6 +137,38 @@ class TestChecker(unittest.TestCase):
         self.assertTrue(any(i.rule == "SPELL" and i.severity == "info" for i in low))
         self.assertEqual([i for i in self.chk.check("Hii ni xqzvbn.") if i.rule == "SPELL"], [])
 
+    # ------------------------------------------------------------ prepositions / standard forms
+    def test_kwa_before_place_after_motion_verb(self):
+        text = "Tafadhali enda kwa kituo cha afya karibu kwako sasa."
+        (issue,) = [i for i in self.chk.check(text) if i.rule == "PREP-KWA"]
+        self.assertEqual(text[issue.start:issue.end], "kwa kituo")
+        # 'kituoni cha afya' would be wrong, so only 'kwenye' is offered before a genitive
+        self.assertEqual([s.text for s in issue.suggestions], ["kwenye kituo"])
+        issues = self.chk.check("Aliingia kwa shule.")
+        (issue,) = [i for i in issues if i.rule == "PREP-KWA"]
+        self.assertEqual([s.text for s in issue.suggestions], ["kwenye shule", "shuleni"])
+
+    def test_kwa_with_people_and_things_is_fine(self):
+        for s in ["Alikwenda kwa daktari.", "Alienda kwa gari.", "Anakuja kwa mwalimu.",
+                  "Nenda kwenye kituo.", "Tafadhali nenda kituoni.", "Alipika kwa moto.",
+                  "Nilinunua kwa shilingi mia.", "Kituo kiko karibu kwa shule."]:
+            self.assertEqual([r for r, _ in self.rules(s) if r == "PREP-KWA"], [], s)
+
+    def test_standard_imperative(self):
+        issues = self.chk.check("Tafadhali enda sasa. Enda nyumbani.")
+        self.assertEqual([i.suggestions[0].text for i in issues if i.rule == "STD-IMP"],
+                         ["nenda", "Nenda"])
+        for s in ["Tafadhali nenda sasa.", "Anaenda sokoni.", "Alikwenda mjini."]:
+            self.assertEqual([r for r, _ in self.rules(s) if r == "STD-IMP"], [], s)
+
+    def test_locative_forms_are_valid_words(self):
+        for s in ["Alikwenda hospitalini.", "Wanaishi mjini.", "Nenda kituoni.", "Yuko shuleni.",
+                  "Alirudi nyumbani."]:
+            self.assertEqual([r for r, _ in self.rules(s) if r == "SPELL"], [], s)
+
+    def test_sentences_that_are_fine_stay_silent(self):
+        self.assertEqual(self.rules("Mwanamke wangu ana homa."), [])
+
     # ------------------------------------------------------------ applying fixes
     def test_apply_suggestions(self):
         text = "kitabu umeanguka. Watoto anacheza."
@@ -110,7 +178,7 @@ class TestChecker(unittest.TestCase):
     def test_issue_serialises(self):
         d = self.chk.check("Kitabu umeanguka.")[0].to_dict()
         self.assertEqual({"start", "end", "text", "rule", "category", "severity", "message",
-                          "message_sw", "suggestions", "confidence"}, set(d))
+                          "message_sw", "suggestions", "confidence", "related"}, set(d))
 
 
 if __name__ == "__main__":
