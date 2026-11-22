@@ -20,9 +20,10 @@ import json
 import re
 
 DEFAULT_PATH = Path(__file__).resolve().parent.parent / "data" / "noun_lexicon.json"
+LEARNED_PATH = Path(__file__).resolve().parent.parent / "data" / "learned_noun_classes.json"
 
 # Confidence by evidence type
-SOURCE_CONFIDENCE = {"headword": 0.95, "plural": 0.9, "plural_rule": 0.7}
+SOURCE_CONFIDENCE = {"headword": 0.95, "plural": 0.9, "plural_rule": 0.7, "learned": 0.75}
 
 # Singular word shapes typical for each ngeli: used only to rank *ambiguous* entries
 _SHAPE = {
@@ -80,7 +81,9 @@ def _derive_plural(word: str, ngeli: str) -> Optional[str]:
 class NounLexicon:
     """Ranked lookup of noun forms.  Build with :meth:`load` or from raw entries."""
 
-    def __init__(self, entries: Iterable[Dict]):
+    def __init__(self, entries: Iterable[Dict], learned: Optional[Dict[str, list]] = None):
+        # learned: word -> [observations, [[ngeli pair, support, "s"|"p"|"sp"], ...]] (see learn.py)
+        self._learned: Dict[str, list] = learned or {}
         self._index: Dict[str, List[NounEntry]] = {}
         self._headwords = 0
         for e in entries:
@@ -88,10 +91,17 @@ class NounLexicon:
 
     # ---------------------------------------------------------- construction
     @classmethod
-    def load(cls, path: Optional[str] = None) -> "NounLexicon":
+    def load(cls, path: Optional[str] = None, learned: Optional[object] = True) -> "NounLexicon":
+        """Dictionary lexicon plus, by default, the packaged learned classes (a fallback for words
+        the dictionary lacks).  ``learned`` may be False, or a path to another learned file."""
         data = json.loads(Path(path or DEFAULT_PATH).read_text(encoding="utf-8"))
         cols = data["meta"]["columns"]
-        return cls(dict(zip(cols, row)) for row in data["entries"])
+        model = None
+        if learned:
+            lp = LEARNED_PATH if learned is True else Path(learned)
+            if lp.exists():
+                model = json.loads(lp.read_text(encoding="utf-8")).get("words")
+        return cls((dict(zip(cols, row)) for row in data["entries"]), model)
 
     def _put(self, form: str, entry: NounEntry):
         bucket = self._index.setdefault(form, [])
@@ -125,10 +135,22 @@ class NounLexicon:
                                              source="plural_rule", **common))
 
     # ---------------------------------------------------------- lookup
+    def _from_learned(self, w: str) -> List[NounEntry]:
+        rec = self._learned.get(w)
+        if not rec:
+            return []
+        out = []
+        for pair, _support, number in rec[1]:
+            for num in (("singular",) if number == "s" else ("plural",) if number == "p"
+                        else ("singular", "plural")):
+                out.append(NounEntry(word=w, lemma=w, ngeli=pair, number=num, source="learned"))
+        return out
+
     def lookup(self, word: str) -> List[NounEntry]:
-        """All analyses of ``word``, best first.  Empty list if unknown."""
+        """All analyses of ``word``, best first.  Dictionary readings win; words the dictionary
+        lacks fall back to classes learned from text.  Empty list if unknown."""
         w = word.lower().replace("’", "'").strip()
-        found = self._index.get(w, [])
+        found = self._index.get(w, []) or self._from_learned(w)
         if len(found) < 2:
             return list(found)
         order = {id(x): i for i, x in enumerate(found)}

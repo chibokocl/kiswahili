@@ -210,7 +210,7 @@ class Checker:
         tokens = tokenize(text)
         issues: List[Issue] = []
         issues += self._rule_capitalization(tokens, text)
-        issues += self._rule_agreement(tokens)
+        issues += self._rule_agreement(tokens, text)
         issues += self._rule_concord(tokens, text)
         issues += self._rule_prepositions(tokens, text)
         issues += self._rule_standard_forms(tokens)
@@ -242,7 +242,7 @@ class Checker:
         return out
 
     # ------------------------------------------------------------------ AGR-SV
-    def _rule_agreement(self, tokens: List[_Token]) -> List[Issue]:
+    def _rule_agreement(self, tokens: List[_Token], text: str) -> List[Issue]:
         out = []
         lex, vp = self.ns.noun_lexicon, self.ns.verb_parser
         if not lex:
@@ -251,10 +251,12 @@ class Checker:
             subj, verb = tokens[i - 1], tokens[i]
             if subj.sentence != verb.sentence or not subj.first_in_sentence:
                 continue
+            if text[subj.end:verb.start].strip():          # "Vinginevyo, itakuwa ..."
+                continue
             sw = _norm(subj.text)
             if sw in ADVERBIAL_NOUNS or sw in DETERMINERS or sw.endswith("ni"):
                 continue
-            readings = self._readings(sw)
+            readings = lex.candidates(sw)      # dictionary readings only: no prefix guesses here
             if not readings:
                 continue
             parse = vp.best(verb.text)
@@ -306,12 +308,21 @@ class Checker:
         return out
 
     def _readings(self, word: str) -> List[Tuple[str, str]]:
-        """(ngeli, number) readings: the lexicon's, else an unattested ma- plural of a known
-        word (masoda <- soda) read as 5/6 plural.  Attested words (mapema) never get this."""
+        """(ngeli, number) readings: the lexicon's; else, for words the dictionary lacks, a
+        prefix-based guess (ki-/vi-/mi- attested words) or an unattested ma- plural of a known
+        word (masoda <- soda) read as 5/6 plural.  Attested ma- words (mapema) never get this."""
         lex = self.ns.noun_lexicon
         found = lex.candidates(word) if lex else []
         if found:
             return found
+        # ki-/vi-/mi- words missing from the dictionary (kituo, nyumba-like gaps): class from the prefix,
+        # but only for attested words that are not verbs, locatives or adjective/adverb forms
+        m = re.match(r"^(ki|vi|mi)[^aeiou]", word)
+        if (m and len(word) >= 5 and self.freq.get(word, 0) >= 3 and not word.endswith("ni")
+                and not self.concord.lookup(word) and not self._plausible_verb(word)
+                and word not in ADVERBIAL_NOUNS and word not in DETERMINERS):
+            return {"ki": [("7/8", "singular")], "vi": [("7/8", "plural")],
+                    "mi": [("3/4", "plural")]}[m.group(1)]
         if (word.startswith("ma") and len(word) >= 6 and self.freq.get(word, 0) < 3
                 and word[2] not in "aeiou"
                 and (word[2:] in self.known or (lex and word[2:] in lex))):
@@ -357,8 +368,7 @@ class Checker:
                 # the modifier may belong to the word before the noun (kitega uchumi vyao);
                 # only words that could be nouns count -- not verbs or short function words
                 pw = _norm(tokens[i - 1].text)
-                if len(pw) > 3 and not self.ns.verb_parser.is_finite_verb(pw) \
-                        and not self.concord.lookup(pw):
+                if len(pw) > 3 and not self._looks_like_verb(pw) and not self.concord.lookup(pw):
                     prev = self.ns.identify_ngeli_enhanced(pw)
                     if prev and set(self._classes([(prev.ngeli_class, "singular"),
                                                    (prev.ngeli_class, "plural")])) & mod_classes:
@@ -394,11 +404,26 @@ class Checker:
                 f"'{noun.text}' ni ya ngeli ya {target}; neno hili lipaswe kuwa '{fixed}', "
                 f"si '{mod.text}'.",
                 [Suggestion(fixed, f"agrees with '{noun.text}'")],
-                0.85 if len(noun_classes) == 1 else 0.75,
+                (0.85 if len(noun_classes) == 1 else 0.75) if lex.lookup(nw) else 0.7,
                 related=[{"start": noun.start, "end": noun.end, "text": noun.text, "role": "noun"}]))
         return out
 
     # ------------------------------------------------------------------ PREP-KWA
+    def _looks_like_verb(self, w: str) -> bool:
+        """A confident verb form with a dictionary root: an imperative (fika), a tensed
+        finite verb (anakula) or an infinitive -- not a loose TAM-less parse (kitega)."""
+        if self.ns.noun_lexicon and w in self.ns.noun_lexicon:
+            return False
+        vp = self.ns.verb_parser
+        for p in vp.parse(w)[:3]:
+            if not vp.is_known_root(p.root) or p.score < 0.6:
+                continue
+            if p.form in ("imperative", "infinitive"):
+                return True
+            if p.form == "finite" and (p.tam or p.polarity == "negative") and p.score >= 0.7:
+                return True
+        return False
+
     def _is_motion_verb(self, word: str) -> bool:
         for p in self.ns.verb_parser.parse(word)[:4]:
             if p.root in MOTION_ROOTS and p.score >= 0.4 \
@@ -447,7 +472,7 @@ class Checker:
             fixed = "Nenda" if t.text[0].isupper() else "nenda"
             out.append(Issue(
                 t.start, t.end, t.text, "STD-IMP", "standard", "info",
-                "The standard imperative of kwenda is 'nenda'; 'enda' is older or biblical style.",
+                "The standard imperative of kwenda is 'nenda' ('enda' is rare in modern writing).",
                 "Amri ya 'kwenda' katika Kiswahili sanifu ni 'nenda'.",
                 [Suggestion(fixed)], 0.65))
         return out

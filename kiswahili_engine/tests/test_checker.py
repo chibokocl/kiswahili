@@ -116,6 +116,25 @@ class TestChecker(unittest.TestCase):
         self.assertEqual(issue.related[0]["text"], "masoda")
         self.assertEqual([r for r, _ in self.rules("Nilinunua masoda ya baridi.")], [])
 
+    def test_noun_missing_from_dictionary_uses_prefix_class(self):
+        # 'kituo' is not a dictionary headword; ki- gives class 7, so 'ya' must be 'cha'
+        text = "Tafadhali fika kituo ya afya karibu nawe."
+        (issue,) = [i for i in self.chk.check(text) if i.rule == "AGR-NA"]
+        self.assertEqual((issue.text, issue.suggestions[0].text), ("ya", "cha"))
+        self.assertEqual(issue.related[0]["text"], "kituo")
+        self.assertLess(issue.confidence, 0.85)            # inferred class, so less sure than a lookup
+        self.assertEqual(self.rules("Tafadhali fika kituo cha afya karibu nawe."), [])
+        self.assertEqual([r for r, _ in self.rules("Vituo vya afya vimefunguliwa.")], [])
+
+    def test_prefix_guess_is_not_used_for_verbs_adverbs_and_locatives(self):
+        for s in ["Alifanya kisheria kabisa.", "Wanaishi vijijini.", "Vinginevyo, itakuwa vigumu.",
+                  "Kisha ya kwanza ilifika.", "Hii ni kitega uchumi vyao."]:
+            self.assertEqual([r for r, _ in self.rules(s) if r.startswith("AGR")], [], s)
+
+    def test_agreement_needs_subject_and_verb_adjacent(self):
+        self.assertEqual([r for r, _ in self.rules("Kitabu, kimeanguka.") if r == "AGR-SV"], [])
+        self.assertEqual([r for r, _ in self.rules("Vinginevyo, itakuwa vizuri.") if r == "AGR-SV"], [])
+
     def test_attested_ma_words_are_not_treated_as_plural_nouns(self):
         for s in ["Alifika mapema sana.", "Alikuja mapema kwa kazi."]:
             self.assertEqual([r for r, _ in self.rules(s) if r == "AGR-NA"], [], s)

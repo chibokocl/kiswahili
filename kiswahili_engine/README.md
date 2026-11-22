@@ -70,6 +70,26 @@ precision-first: it deliberately skips patterns that are correct Kiswahili but l
 Measure it with `python tools/evaluate_checker.py`. See [ROADMAP.md](../ROADMAP.md) for what is
 measured, what is not, and what comes next.
 
+## Learning noun classes from text
+
+The dictionary is incomplete (no *nyumba*, no *kituo*), so `python -m kiswahili_engine.learn`
+learns classes from running text instead of a word list: for every word it counts the agreeing
+words that follow it (*ya, cha, kizuri, changu, hiki*, a verb's subject marker) and keeps every
+ngeli pair consistent with them. A noun seen with both *ya* and *za* can only be 9/10; one seen
+only in the singular with *wa* stays ambiguous (1/2, 3/4, 11/10, 14/6), because those classes
+share every singular form, and consumers accept a modifier that fits any candidate.
+
+```bash
+python -m kiswahili_engine.learn corpus.txt other.pdf -o learned.json --source-note "CC BY-SA ..."
+python tools/evaluate_learner.py learned.json
+```
+
+`NounLexicon` uses the packaged model (`data/learned_noun_classes.json`, built from the Bible)
+only for words the dictionary lacks. Against the dictionary, its candidate pairs include the
+right one for 92% of shared words (single-candidate words: ~91% correct), and it classifies ~900
+words the dictionary does not have. Use well-edited modern text: whatever the corpus treats as
+correct becomes correct. Plain UTF-8 `.txt` is better than PDF. See `DATA_LICENSES.md`.
+
 ## Animacy
 
 Animate nouns take a-/wa- agreement whatever their prefix (*kijana mzuri*, *simba anakuja*), so a

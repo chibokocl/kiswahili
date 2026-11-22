@@ -10,6 +10,7 @@ writing assistant lives or dies on false alarms, so every step is judged by prec
 |---|---|
 | Verb morphology (`VerbParser`) | Slot parser + 3.7k dictionary roots with attested extensions. Recovers the dictionary-attested root for 78% of derived forms (86% give a dictionary-licensed analysis). |
 | Noun lexicon (`NounLexicon`) | 13k headwords with ngeli, plurals and an **animacy flag** derived from each definition (2.8k animate, 7.4k inanimate, 2.8k unknown). Covers ~1/3 of tokens in a sample text. |
+| Learned noun classes (`kiswahili_engine.learn`) | Learns ngeli pairs from running text (agreeing words after each noun); packaged model from the Bible covers 1.8k words, ~900 of them missing from the dictionary. Retrainable on any text. |
 | Adjective concord (`ConcordLexicon`) | 61 adjective stems (dictionary + curated) and generated class forms for adjectives, possessives, *-a*, *-ote*. |
 | Checker (`Checker`) | `AGR-SV`, `AGR-NA`, `PREP-KWA`, `STD-IMP`, `SPELL`, `CAP` with spans, bilingual messages, fixes. |
 | Try it | `python -m kiswahili_engine.server` -> one-page browser tester. |
@@ -27,6 +28,8 @@ writing assistant lives or dies on false alarms, so every step is judged by prec
 
 ## Next, in priority order
 
+0. **Modern text for the learner.** The Bible has no *shule, hospitali, simu, benki, kituo*. Retrain with Swahili Wikipedia (CC BY-SA, plain `.txt`) via `python -m kiswahili_engine.learn`; then regenerate `DATA_LICENSES.md`. Also: **clear or replace the dictionary-derived lexicons before publishing** (see `DATA_LICENSES.md`).
+
 1. **Real error data.** Collect/annotate real mistakes (learner writing, news copy edits) and
    real clean text that is *not* in the spelling corpus. Until then true precision and recall
    are unknown. Every item below should land with cases in this set.
@@ -41,8 +44,9 @@ writing assistant lives or dies on false alarms, so every step is judged by prec
 4. **Standard Kiswahili as default.** The engine's ngeli tables come from a Ki-Micheweni study;
    a general tool needs standard Kiswahili as the default and dialects as options.
 5. **Style and clarity** (the other half of Grammarly): sentence length, calques, register.
-6. **Delivery**: JSON API, editor/browser integration, latency budget (first call currently loads
-   ~90k words and two lexicons).
+6. **Delivery**: JSON API, editor/browser integration. Latency: `check()` on clean text is ~1 ms, but each
+   unknown word costs 80-240 ms in `suggest()` (pure-Python edit distance over ~30k words); use a
+   SymSpell/BK-tree index before release.
 7. **Translation.** The dictionary is Swahili-to-Swahili; a bilingual lexicon (and a decision on
    rule-based vs model-assisted translation) is needed before translation features.
 
