@@ -67,6 +67,47 @@ For reference, base models on `search`: e5-base 0.300, LaBSE 0.425 (r@1).
 * `search_eval.jsonl` was written for this project and has not been checked by a native-speaker
   panel. Treat it as a smoke test, and grow it before trusting small differences.
 
+## Adding modern health documents
+
+`--docs` adds modern documents (`documents.py` cleans PDFs of guides, manuals and clinic forms).
+Experiment with 7 Tanzanian health/nutrition documents (not in the repository; licence not
+cleared): 5 for training (~39k words), and the IYCF leaflet plus both IMCI *Matibabu* charts held
+out. `health_search_eval.jsonl` has 38 hand-written questions, each scored against all 292
+held-out paragraphs (almost all same-topic distractors).
+
+```bash
+python -m kiswahili_embed.train --pairs 8000 --docs DIR --no-doc-neighbours -o models/kiswahili-e5-small-health-nn
+python -m kiswahili_embed.evaluate --model models/kiswahili-e5-small-health-nn --docs DIR
+```
+
+| task | base | Bible only | + health docs | + health docs, no neighbour pairs |
+|---|---|---|---|---|
+| search (r@1) | 0.225 | 0.400 | **0.450** | 0.400 |
+| search-clean (r@1) | 0.700 | 0.625 | **0.750** | 0.625 |
+| health (r@1 / MRR) | 0.263 / 0.41 | **0.395 / 0.54** | 0.263 / 0.42 | 0.368 / 0.50 |
+| health+bible (r@1 / MRR) | 0.237 / 0.39 | **0.395 / 0.53** | 0.263 / 0.41 | 0.368 / 0.49 |
+
+Paired, query by query against the base model (better / worse):
+
+| task | Bible only | + health | + health, no neighbours |
+|---|---|---|---|
+| search | 26 / 6 | 25 / 6 | 24 / 6 |
+| search-clean | 8 / 7 | 8 / 5 | 7 / 6 |
+| health | **20 / 6** | 15 / 14 | **20 / 8** |
+| health+bible | **20 / 5** | 13 / 15 | 19 / 9 |
+
+What this shows:
+
+* **Fine-tuning helps health search clearly** (20 questions better, 6 worse), even with only Bible
+  training text. It also helps whenever text from different registers is searched together.
+* **Neighbour pairs from the documents hurt in-domain search**: they pull adjacent health sentences
+  together, so paragraphs on one topic blur. Without them the gain returns.
+* **The health documents add nothing measurable beyond the Bible-only model** on these tests, and
+  no model is clearly better than the base on `search-clean` (differences of 1-3 questions).
+* So the default model stays Bible-only: it is the best or tied on every task, and its licence
+  (CC BY-SA) is clear. With 38-40 questions per test, only differences of several questions mean
+  anything; a larger, native-speaker-checked question set is the main thing missing.
+
 ## Noun classes from embeddings (checker experiment)
 
 `python -m kiswahili_embed.noun_classes` guesses the ngeli of a word from its nearest known nouns
