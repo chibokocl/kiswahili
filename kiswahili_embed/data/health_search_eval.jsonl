@@ -1,0 +1,38 @@
+{"query": "Mtoto wa miezi sita aanze kula chakula gani?", "gold": ["Anza chakula cha nyongeza mtoto anapotimiza miezi 6"]}
+{"query": "Mtoto ambaye hanyonyi anahitaji maziwa kiasi gani kwa siku?", "gold": ["vikombe 2 (500 ml) vya maziwa"]}
+{"query": "Mtoto wa miezi minane ale mara ngapi kwa siku?", "gold": ["Umri wa miezi 7 – 8"]}
+{"query": "Je, ni vibaya kumpa mtoto mdogo soda au chai?", "gold": ["vinywaji visivyo na virutubisho"]}
+{"query": "Mtoto wa mwaka mmoja na nusu ale kiasi gani kila mlo?", "gold": ["Umri wa miezi 12 – 24"]}
+{"query": "Nifanye nini kuhusu chakula mtoto akiwa anaumwa?", "gold": ["Mtoto akiwa mgonjwa mpe milo midogo"]}
+{"query": "Kwa nini mtoto apelekwe kliniki kila mwezi?", "gold": ["Endelea kumpeleka mtoto kwenye kiliniki kila mwezi"]}
+{"query": "Je, mtoto mchanga anaweza kunywa maji kabla ya miezi sita?", "gold": ["Mtoto asipewe chakula kingine chochote hata maji"]}
+{"query": "Mama mwenye VVU amlishe mtoto vipi?", "gold": ["Kwa mama aliyeambukizwa VVU ni muhimu kumwona mtoa huduma", "Mama aliyeambukizwa VVU anaweza kumuambukiza mtoto"]}
+{"query": "Kwa nini watoto wanahitaji kula mara nyingi?", "gold": ["matumbo yao ni madogo"]}
+{"query": "Usafi wa mikono kabla ya kumlisha mtoto", "gold": ["anawe mikono yake kwa sabuni na maji safi yanayotiririka kabla ya kutayarisha chakula"]}
+{"query": "Kwa nini nisitumie chupa ya kunyonyea?", "gold": ["Epuka kutumia chupa na chuchu kwa vile ni vigumu kuzisafisha"]}
+{"query": "Je, ninaweza kumpa mtoto chakula kilicholala usiku?", "gold": ["Usimpe chakula kilichobaki au kiporo"]}
+{"query": "Ninawezaje kuongeza nguvu kwenye uji wa mtoto?", "gold": ["Boresha uji na chakula cha mtoto", "Chakula cha mtoto huweza kuongezwa mafuta na sukari"]}
+{"query": "Chuchu zangu zinauma ninaponyonyesha", "gold": ["Kama chuchu zina michubuko au maumivu", "Ukipata michubuko kwenye chuchu"]}
+{"query": "Maziwa ya mama yaliyokamuliwa hukaa muda gani bila kuharibika?", "gold": ["Maziwa yaliyokamuliwa yanaweza kuhifadhiwa", "yanaweza kuhifadhiwa katika joto la kawaida kwa saa 6- 8"]}
+{"query": "Maziwa ya kwanza ya njano yana faida gani kwa mtoto?", "gold": ["kolostramu"]}
+{"query": "Nianze kunyonyesha muda gani baada ya kujifungua?", "gold": ["ndani ya muda wa saa moja"]}
+{"query": "Namna sahihi ya kumshika mtoto anaponyonya", "gold": ["Tumbo la mtoto ligusane na tumbo lako", "Fundisha Kumpakata na Kumuweka Vizuri Mtoto Kwenye Titi"]}
+{"query": "Nitajuaje kama mtoto ananyonya vizuri?", "gold": ["Utatambua kuwa mtoto ananyonya vizuri", "Je mtoto mchanga ananyonya vizuri"]}
+{"query": "Mtoto anyonye mara ngapi usiku na mchana?", "gold": ["angalau mara 10 katika saa 24"]}
+{"query": "Dalili kwamba mtoto anapata maziwa ya kutosha", "gold": ["haja ndogo angalau mara 6 kwa siku"]}
+{"query": "Kwa nini mama akamue maziwa yake?", "gold": ["Kuna sababu nyingi muhimu na za manufaa za kukamua", "Ili mtoto anywe maziwa yako wakati wewe uko mbali"]}
+{"query": "Jinsi ya kukamua titi kwa mkono", "gold": ["Weka kidole gumba juu ya sehemu nyeusi ya titi", "Kamua titi moja kwa dakika 3 hadi 5"]}
+{"query": "Jinsi ya kupika nyama na mboga kwa usalama", "gold": ["Pika nyama, samaki na mayai mpaka viive kabisa"]}
+{"query": "Mjamzito aanze kliniki lini?", "gold": ["Anza kuhudhuria kiliniki ya wajawazito"]}
+{"query": "Mama mjamzito aongezeke uzito kiasi gani?", "gold": ["Kuongeza uzito angalau kilo 12 wakati wa ujauzito"]}
+{"query": "Kwa nini nisinywe chai wakati wa kula nikiwa mjamzito?", "gold": ["Kuepuka kunywa chai au kahawa pamoja na mlo"]}
+{"query": "Vidonge vya kuongeza damu wakati wa ujauzito", "gold": ["vidonge vya madini ya chuma na vya foliki asidi"]}
+{"query": "Mifano ya vyakula vya protini kama maharage na samaki", "gold": ["Vyakula vya Jamii ya Kunde na vya Asili ya Wanyama"]}
+{"query": "Mtoto ana degedege afanyiwe nini?", "gold": ["Toa Diazepam kwa njia ya Puru"]}
+{"query": "Mtoto anaharisha na amepungukiwa maji mwilini", "gold": ["Tibu Upungufu Kiasi wa Maji na Chumvichumvi Mwilini kwa ORS", "Kutibu Haraka Upungufu Mkubwa wa Maji"]}
+{"query": "Dawa ya homa kali kwa mtoto", "gold": ["TOA PARACETAMOL KWA HOMA KALI", "Toa kipimo kimoja cha paracetamol kwa homa kali"]}
+{"query": "Mtoto ana malaria kali apewe dawa gani?", "gold": ["Toa Artesunate au quinine kwa Malaria kali", "Toa Artesunate ya msuli"]}
+{"query": "Sikio la mtoto linatoa usaha", "gold": ["Kausha sikio kwa utambi"]}
+{"query": "Mtoto ana vidonda vyeupe mdomoni", "gold": ["Tibu vidonda au utando mweupe mdomoni kwa Gentian Violet", "Kama ana vidonda vya mdomoni tibu kwa GV"]}
+{"query": "Ngozi na macho ya mtoto mchanga ni ya njano", "gold": ["rangi ya njano kwenye macho au ngozi", "Uso na macho ni njano", "huduma ya mwanga (phototherapy)"]}
+{"query": "Kitu kimeingia kwenye jicho la mtoto", "gold": ["Jeraha au kitu kigeni kwenye jicho", "Angalia uwepo wa kitu kigeni kwenye jicho"]}

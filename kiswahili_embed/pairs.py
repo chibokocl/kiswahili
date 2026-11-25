@@ -108,3 +108,34 @@ def as_columns(pairs: Sequence[Pair]) -> Tuple[List[str], List[str]]:
     anchors = ["query: " + p.anchor for p in pairs]
     positives = [("query: " if p.kind == "noise" else "passage: ") + p.positive for p in pairs]
     return anchors, positives
+
+
+def make_doc_pairs(docs, n_noise: int = 1000, crops_per_sentence: int = 1,
+                   seed: int = 17) -> List[Pair]:
+    """Pairs from modern documents (:class:`~kiswahili_embed.documents.Document`).
+
+    ``section``    a sentence -> the paragraph it comes from (when the paragraph is longer), which
+                   is the shape of a search hit; plus all the sentence-level kinds above.
+    """
+    from .documents import doc_sentences
+    rng = random.Random(seed)
+    out: List[Pair] = []
+    sents_all: List[str] = []
+    for d in docs:
+        for para in d.paragraphs:
+            sents = doc_sentences([para])
+            sents_all.extend(sents)
+            if len(sents) > 1:
+                for s in sents:
+                    out.append(Pair(s, para, "section"))
+        sents = d.sentences
+        for i in range(len(sents) - 1):
+            out.append(Pair(sents[i], sents[i + 1], "neighbour"))
+    for s in sents_all:
+        if len(s.split()) >= 8:
+            for _ in range(crops_per_sentence):
+                out.append(Pair(crop(s, rng, 0.3, 0.6), s, "crop"))
+    for s in rng.sample(sents_all, min(n_noise, len(sents_all))):
+        out.append(Pair(add_noise(s, rng), s, "noise"))
+    rng.shuffle(out)
+    return out

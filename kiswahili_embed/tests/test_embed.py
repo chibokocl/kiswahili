@@ -110,3 +110,41 @@ def test_search_eval_file_is_well_formed():
     lines = (corpus.DATA_DIR / "search_eval.jsonl").read_text(encoding="utf-8").splitlines()
     items = [json.loads(l) for l in lines if l.strip()]
     assert len(items) == 40 and all(it["query"] and it["passage"] for it in items)
+
+
+def test_document_cleaning_repairs_ligatures_and_drops_forms():
+    from kiswahili_embed.documents import clean_paragraphs, doc_sentences
+    raw = ("Jina la Mtoto ____________ Umri (miezi)____\n\n"
+           "Mtoto ana uoni haĮfu au haoni kabisa kwa muda mrefu.\n\n"
+           "Kunywa maji saﬁ kila siku. D Osha mikono kwa sabuni kabla ya kula chakula.\n\n"
+           "machozi yĂŶĂƟrirka kwenye jicho\n\n"
+           "Ndiyo ☐ Hapana ☐\n\n"
+           "Pika nyama mpaka iive kabisa ili kuepuka maambukizi. 44\n")
+    paras = clean_paragraphs(raw)
+    assert "Mtoto ana uoni hafifu au haoni kabisa kwa muda mrefu." in paras
+    assert "Kunywa maji safi kila siku." in paras
+    assert "Osha mikono kwa sabuni kabla ya kula chakula." in paras
+    assert "Pika nyama mpaka iive kabisa ili kuepuka maambukizi." in paras
+    assert not any("Ă" in p or "☐" in p or "___" in p for p in paras)
+    assert doc_sentences(["Kula vizuri kila siku. Lala mapema kila usiku sana."]) == [
+        "Kula vizuri kila siku.", "Lala mapema kila usiku sana."]
+
+
+def test_split_documents_holds_out_groups():
+    from kiswahili_embed.documents import Document, split_documents
+    docs = [Document("a-IYCF", []), Document("Matibabu_x", []), Document("Mwongozo", [])]
+    train, test = split_documents(docs)
+    assert [d.name for d in train] == ["Mwongozo"] and len(test) == 2
+
+
+def test_retrieval_accepts_gold_sets():
+    pool = ["mbuzi", "kitabu", "kitabu kizuri"]
+    r = retrieval(FakeEmbedder(), ["kitabu"], pool, [[1, 2]])
+    assert r["r@1"] == 1.0
+
+
+def test_doc_pairs_include_sections():
+    from kiswahili_embed.documents import Document
+    doc = Document("d", ["Kula chakula bora kila siku ya wiki. Kunywa maji safi ya kutosha kila siku."])
+    kinds = {p.kind for p in pairs.make_doc_pairs([doc], n_noise=1)}
+    assert {"section", "neighbour", "noise"} <= kinds

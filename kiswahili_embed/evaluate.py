@@ -21,6 +21,13 @@ and we report recall@1, recall@10 and mean reciprocal rank.
                     out-of-domain distractors.  Compare it with ``search`` to see whether a gain
                     comes from better meaning or only from telling Bible text apart from modern text.
 
+With ``--docs`` (the health documents; see ``documents.py`` for the held-out ones):
+
+``health``          38 hand-written questions -> the held-out paragraph(s) that answer them (pool:
+                    all ~290 held-out paragraphs, mostly same-topic distractors)
+``health+bible``    the same plus 2,000 Bible distractors
+``health-noise``    noisy -> clean held-out health sentences
+
 The noise and next-sentence tasks come from the same generator as the training pairs, so they
 measure what the training optimised; ``search`` and the Azimio tasks are the honest checks.
 """
@@ -39,16 +46,22 @@ from .pairs import add_noise
 
 
 def retrieval(emb: SwahiliEmbedder, queries: Sequence[str], pool: Sequence[str],
-              gold: Sequence[int], pool_role: str = "query",
+              gold: Sequence, pool_role: str = "query",
               exclude: Sequence[int] = ()) -> Dict[str, float]:
-    """``exclude[i]`` is a pool index that query i may not match (the query sentence itself)."""
+    """``gold[i]`` is the pool index (or a list of indices, any of which counts) for query i;
+    ``exclude[i]`` is a pool index that query i may not match (the query sentence itself)."""
     q = emb.encode(queries)
     p = emb.encode(pool, role=pool_role)
     scores = q @ p.T
     if len(exclude):
         scores[np.arange(len(exclude)), exclude] = -np.inf
-    gold_scores = scores[np.arange(len(gold)), gold]
-    ranks = (scores > gold_scores[:, None]).sum(axis=1) + 1
+    ranks = np.empty(len(gold), dtype=np.int64)
+    for i, g in enumerate(gold):
+        g = [g] if isinstance(g, (int, np.integer)) else list(g)
+        mask = np.zeros(scores.shape[1], dtype=bool)
+        mask[g] = True
+        best = scores[i, mask].max()
+        ranks[i] = int((scores[i, ~mask] > best).sum()) + 1
     return {"r@1": float((ranks == 1).mean()), "r@10": float((ranks <= 10).mean()),
             "mrr": float((1.0 / ranks).mean()), "n": len(queries), "pool": len(pool)}
 
@@ -71,7 +84,18 @@ def search_task(path: Path, distractors: List[str]) -> tuple:
     return [it["query"] for it in items], pool, list(range(len(items))), "passage"
 
 
-def run(model: str, limit: int = 1000, seed: int = 7) -> Dict[str, Dict[str, float]]:
+def health_task(path: Path, pool: List[str], distractors: List[str]) -> tuple:
+    """Questions whose answer is any pool paragraph containing one of the ``gold`` phrases."""
+    items = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    gold = [[j for j, para in enumerate(pool) if any(g in para for g in it["gold"])] for it in items]
+    missing = [it["query"] for it, g in zip(items, gold) if not g]
+    if missing:
+        raise ValueError(f"no pool paragraph answers: {missing}")
+    return [it["query"] for it in items], pool + distractors, gold, "passage"
+
+
+def run(model: str, limit: int = 1000, seed: int = 7,
+        docs: Sequence[Path] = ()) -> Dict[str, Dict[str, float]]:
     emb = SwahiliEmbedder(model)
     _, bible_test = split(bible_sentences())
     azimio = azimio_sentences()
@@ -84,6 +108,16 @@ def run(model: str, limit: int = 1000, seed: int = 7) -> Dict[str, Dict[str, flo
         "search": search_task(DATA_DIR / "search_eval.jsonl", rng.sample(bible_test, 2000)),
         "search-clean": search_task(DATA_DIR / "search_eval.jsonl", []),
     }
+    if docs:
+        from .corpus import dedupe
+        from .documents import load_documents, split_documents
+        train_docs, test_docs = split_documents(load_documents(docs))
+        pool = dedupe([p for d in test_docs for p in d.paragraphs])
+        qa = DATA_DIR / "health_search_eval.jsonl"
+        tasks["health"] = health_task(qa, pool, [])
+        tasks["health+bible"] = health_task(qa, pool, rng.sample(bible_test, 2000))
+        test_sents = [s for d in test_docs for s in d.sentences]
+        tasks["health-noise"] = noise_task(test_sents, seed, limit)
     return {name: retrieval(emb, *t) for name, t in tasks.items()}
 
 
@@ -92,8 +126,10 @@ def main(argv=None) -> None:
     ap.add_argument("--model", default=DEFAULT_BASE)
     ap.add_argument("--limit", type=int, default=1000, help="queries per task")
     ap.add_argument("--json", type=Path, help="also write results here")
+    ap.add_argument("--docs", type=Path, nargs="*", default=[],
+                    help="modern documents (PDF/txt or folders); enables the health tasks")
     args = ap.parse_args(argv)
-    res = run(args.model, args.limit)
+    res = run(args.model, args.limit, docs=args.docs)
     print(f"model: {args.model}")
     print(f"{'task':<14}{'r@1':>7}{'r@10':>7}{'mrr':>7}{'n':>6}{'pool':>6}")
     for name, r in res.items():
