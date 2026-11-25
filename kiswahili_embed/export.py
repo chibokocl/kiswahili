@@ -47,8 +47,9 @@ print(q @ d.T)
 ## Evaluation
 
 Retrieval among a pool of candidates (`python -m kiswahili_embed.evaluate` in the source repository).
-`search` is 40 hand-written modern questions with 2,000 Bible distractors, a smoke test rather
-than a validated benchmark; the other tasks are built like the training pairs.
+`search` is 40 hand-written modern questions with 2,000 Bible distractors; `search-clean` is the
+same questions against only their 40 passages.  Both are a smoke test rather than a validated
+benchmark (40 items: one query is 0.025).  The other tasks are built like the training pairs.
 
 | task | base r@1 | fine-tuned r@1 | base MRR | fine-tuned MRR | pool |
 |---|---|---|---|---|---|
@@ -66,8 +67,11 @@ Training details: `training_info.json`.
 
 ## Limitations
 
-The training text is a single Bible translation, so the model knows religious and narrative
-Kiswahili best. Modern vocabulary (technology, health, politics) comes from the base model only.
+The training text is a single Bible translation.  The gain on `search` comes from telling
+Bible-style text apart from modern text, not from better modern semantics: on `search-clean` the
+fine-tuned model is no better than the base (slightly worse, within the noise of 40 items).  Use
+it where Kiswahili text of mixed register is searched together; for modern-only text the base
+model is as good.  Modern vocabulary (technology, health, politics) comes from the base model.
 """
 
 

@@ -48,7 +48,9 @@ class SwahiliEmbedder:
 
     @property
     def dim(self) -> int:
-        return int(self.model.get_sentence_embedding_dimension())
+        get = getattr(self.model, "get_embedding_dimension", None) or \
+            self.model.get_sentence_embedding_dimension
+        return int(get())
 
     def encode(self, texts: Union[str, Sequence[str]], role: str = "query") -> np.ndarray:
         prefix = PREFIXES[role] if self.uses_prefixes else ""
