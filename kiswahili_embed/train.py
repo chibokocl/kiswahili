@@ -22,7 +22,8 @@ from .pairs import as_columns, make_pairs
 
 
 def train(base: str, out: Path, n_pairs: int, epochs: int, batch_size: int, lr: float,
-          max_len: int, seed: int, docs=(), doc_repeats: int = 1) -> dict:
+          max_len: int, seed: int, docs=(), doc_repeats: int = 1,
+          doc_neighbours: bool = True) -> dict:
     import torch
     from datasets import Dataset
     from sentence_transformers import (SentenceTransformer, SentenceTransformerTrainer,
@@ -40,10 +41,11 @@ def train(base: str, out: Path, n_pairs: int, epochs: int, batch_size: int, lr: 
         from .pairs import make_doc_pairs
         train_docs, test_docs = split_documents(load_documents(docs))
         for r in range(doc_repeats):
-            pairs += make_doc_pairs(train_docs, seed=seed + r)
+            pairs += make_doc_pairs(train_docs, seed=seed + r, neighbours=doc_neighbours)
         random.Random(seed).shuffle(pairs)
         doc_info = {"train_documents": [d.name for d in train_docs],
-                    "held_out_documents": [d.name for d in test_docs], "doc_repeats": doc_repeats}
+                    "held_out_documents": [d.name for d in test_docs], "doc_repeats": doc_repeats,
+                    "doc_neighbours": doc_neighbours}
     anchors, positives = as_columns(pairs)
     ds = Dataset.from_dict({"anchor": anchors, "positive": positives})
 
@@ -94,9 +96,11 @@ def main(argv=None) -> None:
                     help="modern documents (PDF/txt or folders) to add; held-out ones are skipped")
     ap.add_argument("--doc-repeats", type=int, default=1,
                     help="build document pairs this many times (fresh crops/noise each time)")
+    ap.add_argument("--no-doc-neighbours", action="store_true",
+                    help="leave out sentence -> next sentence pairs from the documents")
     args = ap.parse_args(argv)
     info = train(args.base, args.out, args.pairs, args.epochs, args.batch_size, args.lr,
-                 args.max_len, args.seed, args.docs, args.doc_repeats)
+                 args.max_len, args.seed, args.docs, args.doc_repeats, not args.no_doc_neighbours)
     print(json.dumps(info, indent=2))
     print(f"saved to {args.out}")
 

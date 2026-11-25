@@ -63,7 +63,8 @@ def retrieval(emb: SwahiliEmbedder, queries: Sequence[str], pool: Sequence[str],
         best = scores[i, mask].max()
         ranks[i] = int((scores[i, ~mask] > best).sum()) + 1
     return {"r@1": float((ranks == 1).mean()), "r@10": float((ranks <= 10).mean()),
-            "mrr": float((1.0 / ranks).mean()), "n": len(queries), "pool": len(pool)}
+            "mrr": float((1.0 / ranks).mean()), "n": len(queries), "pool": len(pool),
+            "ranks": ranks.tolist()}
 
 
 def noise_task(sents: List[str], seed: int, limit: int) -> tuple:

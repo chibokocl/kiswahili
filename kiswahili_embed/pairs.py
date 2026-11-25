@@ -111,7 +111,7 @@ def as_columns(pairs: Sequence[Pair]) -> Tuple[List[str], List[str]]:
 
 
 def make_doc_pairs(docs, n_noise: int = 1000, crops_per_sentence: int = 1,
-                   seed: int = 17) -> List[Pair]:
+                   seed: int = 17, neighbours: bool = True) -> List[Pair]:
     """Pairs from modern documents (:class:`~kiswahili_embed.documents.Document`).
 
     ``section``    a sentence -> the paragraph it comes from (when the paragraph is longer), which
@@ -128,7 +128,7 @@ def make_doc_pairs(docs, n_noise: int = 1000, crops_per_sentence: int = 1,
             if len(sents) > 1:
                 for s in sents:
                     out.append(Pair(s, para, "section"))
-        sents = d.sentences
+        sents = d.sentences if neighbours else []
         for i in range(len(sents) - 1):
             out.append(Pair(sents[i], sents[i + 1], "neighbour"))
     for s in sents_all:
