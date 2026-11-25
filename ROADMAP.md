@@ -14,6 +14,7 @@ writing assistant lives or dies on false alarms, so every step is judged by prec
 | Adjective concord (`ConcordLexicon`) | 61 adjective stems (dictionary + curated) and generated class forms for adjectives, possessives, *-a*, *-ote*. |
 | Checker (`Checker`) | `AGR-SV`, `AGR-NA`, `PREP-KWA`, `STD-IMP`, `SPELL`, `CAP` with spans, bilingual messages, fixes. |
 | Try it | `python -m kiswahili_engine.server` -> one-page browser tester. |
+| Sentence embeddings (`kiswahili_embed`) | multilingual-e5-small fine-tuned on the open Bible text; semantic search index, retrieval benchmarks, model-card export. See `kiswahili_embed/README.md` for numbers. |
 | Evaluation (`tools/evaluate_checker.py`) | Clean-text false alarms + synthetic detection/fix accuracy. |
 
 ### Numbers (run `python tools/evaluate_checker.py`)
@@ -47,7 +48,11 @@ writing assistant lives or dies on false alarms, so every step is judged by prec
 6. **Delivery**: JSON API, editor/browser integration. Latency: `check()` on clean text is ~1 ms, but each
    unknown word costs 80-240 ms in `suggest()` (pure-Python edit distance over ~30k words); use a
    SymSpell/BK-tree index before release.
-7. **Translation.** The dictionary is Swahili-to-Swahili; a bilingual lexicon (and a decision on
+7. **Embeddings on modern text.** The fine-tuned encoder learned to separate Bible-style text from
+   modern text but did not get better at modern meaning (see `kiswahili_embed/README.md`). Next:
+   train on Swahili Wikipedia/news (CC BY-SA), mine question/answer or title/body pairs, try a
+   larger base (LaBSE / e5-base) on a GPU, and build a larger native-speaker-checked search set.
+8. **Translation.** The dictionary is Swahili-to-Swahili; a bilingual lexicon (and a decision on
    rule-based vs model-assisted translation) is needed before translation features.
 
 ## Known limits

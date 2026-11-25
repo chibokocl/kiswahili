@@ -17,6 +17,9 @@ and we report recall@1, recall@10 and mean reciprocal rank.
                     Bible sentences as distractors.  This checks that Bible fine-tuning has not
                     destroyed general semantics.  Written for this project, not validated by
                     a panel of native speakers: treat it as a smoke test.
+``search-clean``    the same 40 questions against only the 40 passages: semantic matching with no
+                    out-of-domain distractors.  Compare it with ``search`` to see whether a gain
+                    comes from better meaning or only from telling Bible text apart from modern text.
 
 The noise and next-sentence tasks come from the same generator as the training pairs, so they
 measure what the training optimised; ``search`` and the Azimio tasks are the honest checks.
@@ -79,6 +82,7 @@ def run(model: str, limit: int = 1000, seed: int = 7) -> Dict[str, Dict[str, flo
         "azimio-noise": noise_task(azimio, seed, limit),
         "azimio-next": next_task(azimio, seed, limit),
         "search": search_task(DATA_DIR / "search_eval.jsonl", rng.sample(bible_test, 2000)),
+        "search-clean": search_task(DATA_DIR / "search_eval.jsonl", []),
     }
     return {name: retrieval(emb, *t) for name, t in tasks.items()}
 
