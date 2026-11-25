@@ -1,0 +1,6 @@
+# Optional: Kiswahili sentence embeddings (kiswahili_embed). CPU wheels of torch work.
+torch>=2.2
+sentence-transformers>=3.0
+datasets>=2.18
+accelerate>=0.26
+numpy>=1.24

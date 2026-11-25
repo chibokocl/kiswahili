@@ -209,3 +209,7 @@ __marimo__/
 
 .pdm-python
 .pdf
+
+# Embedding model: weights (~470 MB) and the regenerable sentence cache
+models/
+kiswahili_embed/data/bible_sentences.txt

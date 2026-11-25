@@ -33,6 +33,8 @@ setup(
     python_requires=">=3.8",
     install_requires=requirements,
     extras_require={
+        "embed": ["torch>=2.2", "sentence-transformers>=3.0", "datasets>=2.18",
+                  "accelerate>=0.26", "numpy>=1.24"],
         "dev": [
             "pytest>=6.0",
             "pytest-cov>=2.0",
@@ -44,6 +46,7 @@ setup(
     package_data={
         "kiswahili": ["corpus/*.json", "corpus/*.txt"],
         "kiswahili_engine": ["data/*.json", "web/*.html"],
+        "kiswahili_embed": ["data/*.jsonl"],
     },
     entry_points={
         "console_scripts": [
