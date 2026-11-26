@@ -28,6 +28,8 @@ With ``--docs`` (the health documents; see ``documents.py`` for the held-out one
 ``health+bible``    the same plus 2,000 Bible distractors
 ``health:caregiver`` / ``health:clinician``  the same split by who is asking
 ``health-noise``    noisy -> clean held-out health sentences
+``generated``       with ``--questions``: Claude-generated questions on the held-out documents
+                    (gold = the verbatim answer quote), split by voice as above
 
 The noise and next-sentence tasks come from the same generator as the training pairs, so they
 measure what the training optimised; ``search`` and the Azimio tasks are the honest checks.
@@ -98,8 +100,24 @@ def health_task(path: Path, pool: List[str], distractors: List[str], who: str = 
     return [it["query"] for it in items], pool + distractors, gold, "passage"
 
 
+def generated_task(path: Path, pool: List[str], who: str = "") -> tuple:
+    """Generated questions on held-out documents (``split == "test"``), gold = their answer quote."""
+    import re
+    squash = lambda t: re.sub(r"\s+", " ", t).strip()
+    rows = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    rows = [r for r in rows if r["split"] == "test" and (not who or r["who"] == who)]
+    flat = [squash(p) for p in pool]
+    queries, gold = [], []
+    for r in rows:
+        g = [j for j, para in enumerate(flat) if r["answer_quote"] in para]
+        if g:
+            queries.append(r["question"])
+            gold.append(g)
+    return queries, pool, gold, "passage"
+
+
 def run(model: str, limit: int = 1000, seed: int = 7,
-        docs: Sequence[Path] = ()) -> Dict[str, Dict[str, float]]:
+        docs: Sequence[Path] = (), questions: Path = None) -> Dict[str, Dict[str, float]]:
     emb = SwahiliEmbedder(model)
     _, bible_test = split(bible_sentences())
     azimio = azimio_sentences()
@@ -122,6 +140,10 @@ def run(model: str, limit: int = 1000, seed: int = 7,
         tasks["health+bible"] = health_task(qa, pool, rng.sample(bible_test, 2000))
         tasks["health:caregiver"] = health_task(qa, pool, [], who="caregiver")
         tasks["health:clinician"] = health_task(qa, pool, [], who="clinician")
+        if questions and questions.exists():
+            tasks["generated"] = generated_task(questions, pool)
+            tasks["generated:caregiver"] = generated_task(questions, pool, "caregiver")
+            tasks["generated:clinician"] = generated_task(questions, pool, "clinician")
         test_sents = [s for d in test_docs for s in d.sentences]
         tasks["health-noise"] = noise_task(test_sents, seed, limit)
     return {name: retrieval(emb, *t) for name, t in tasks.items()}
@@ -134,8 +156,11 @@ def main(argv=None) -> None:
     ap.add_argument("--json", type=Path, help="also write results here")
     ap.add_argument("--docs", type=Path, nargs="*", default=[],
                     help="modern documents (PDF/txt or folders); enables the health tasks")
+    ap.add_argument("--questions", type=Path,
+                    help="generated questions (generate_questions.py); with --docs adds the "
+                         "'generated' tasks from held-out documents")
     args = ap.parse_args(argv)
-    res = run(args.model, args.limit, docs=args.docs)
+    res = run(args.model, args.limit, docs=args.docs, questions=args.questions)
     print(f"model: {args.model}")
     print(f"{'task':<18}{'r@1':>7}{'r@10':>7}{'mrr':>7}{'n':>6}{'pool':>6}")
     for name, r in res.items():

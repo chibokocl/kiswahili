@@ -158,3 +158,27 @@ def test_health_eval_file_is_well_formed():
     assert len({it["id"] for it in items}) == 150 and len({it["query"] for it in items}) == 150
     assert {it["who"] for it in items} == {"caregiver", "clinician"}
     assert all(it["gold"] and all(g.strip() for g in it["gold"]) for it in items)
+
+
+def test_generated_questions_validate_and_score(tmp_path):
+    import json
+    from kiswahili_embed.documents import Document
+    from kiswahili_embed.evaluate import generated_task
+    from kiswahili_embed.generate_questions import plan, validate
+    docs = [Document("IYCF-x", ["Mtoto apewe maziwa ya mama pekee kwa miezi sita ya mwanzo.",
+                                "Kichwa"]),
+            Document("Mwongozo", ["Kula mboga za majani na matunda kila siku kwa afya bora."])]
+    jobs = plan(docs, target=4)
+    assert [j["split"] for j in jobs] == ["test", "train"]      # 'Kichwa' is too short
+    job = jobs[0]
+    rows = validate(job, [
+        {"question": "Mtoto anyonye kwa muda gani?", "who": "caregiver",
+         "answer_quote": "maziwa ya mama pekee kwa miezi sita"},
+        {"question": "Swali la uongo kabisa", "who": "caregiver", "answer_quote": "haipo kabisa"},
+        {"question": "Mtoto anyonye kwa muda gani?", "who": "caregiver",
+         "answer_quote": "maziwa ya mama pekee"}])
+    assert len(rows) == 1 and rows[0]["split"] == "test"      # bad quote and duplicate dropped
+    path = tmp_path / "q.jsonl"
+    path.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
+    q, pool, gold, role = generated_task(path, docs[0].paragraphs)
+    assert q == ["Mtoto anyonye kwa muda gani?"] and gold == [[0]] and role == "passage"
