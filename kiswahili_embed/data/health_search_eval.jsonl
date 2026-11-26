@@ -1,38 +1,150 @@
-{"query": "Mtoto wa miezi sita aanze kula chakula gani?", "gold": ["Anza chakula cha nyongeza mtoto anapotimiza miezi 6"]}
-{"query": "Mtoto ambaye hanyonyi anahitaji maziwa kiasi gani kwa siku?", "gold": ["vikombe 2 (500 ml) vya maziwa"]}
-{"query": "Mtoto wa miezi minane ale mara ngapi kwa siku?", "gold": ["Umri wa miezi 7 – 8"]}
-{"query": "Je, ni vibaya kumpa mtoto mdogo soda au chai?", "gold": ["vinywaji visivyo na virutubisho"]}
-{"query": "Mtoto wa mwaka mmoja na nusu ale kiasi gani kila mlo?", "gold": ["Umri wa miezi 12 – 24"]}
-{"query": "Nifanye nini kuhusu chakula mtoto akiwa anaumwa?", "gold": ["Mtoto akiwa mgonjwa mpe milo midogo"]}
-{"query": "Kwa nini mtoto apelekwe kliniki kila mwezi?", "gold": ["Endelea kumpeleka mtoto kwenye kiliniki kila mwezi"]}
-{"query": "Je, mtoto mchanga anaweza kunywa maji kabla ya miezi sita?", "gold": ["Mtoto asipewe chakula kingine chochote hata maji"]}
-{"query": "Mama mwenye VVU amlishe mtoto vipi?", "gold": ["Kwa mama aliyeambukizwa VVU ni muhimu kumwona mtoa huduma", "Mama aliyeambukizwa VVU anaweza kumuambukiza mtoto"]}
-{"query": "Kwa nini watoto wanahitaji kula mara nyingi?", "gold": ["matumbo yao ni madogo"]}
-{"query": "Usafi wa mikono kabla ya kumlisha mtoto", "gold": ["anawe mikono yake kwa sabuni na maji safi yanayotiririka kabla ya kutayarisha chakula"]}
-{"query": "Kwa nini nisitumie chupa ya kunyonyea?", "gold": ["Epuka kutumia chupa na chuchu kwa vile ni vigumu kuzisafisha"]}
-{"query": "Je, ninaweza kumpa mtoto chakula kilicholala usiku?", "gold": ["Usimpe chakula kilichobaki au kiporo"]}
-{"query": "Ninawezaje kuongeza nguvu kwenye uji wa mtoto?", "gold": ["Boresha uji na chakula cha mtoto", "Chakula cha mtoto huweza kuongezwa mafuta na sukari"]}
-{"query": "Chuchu zangu zinauma ninaponyonyesha", "gold": ["Kama chuchu zina michubuko au maumivu", "Ukipata michubuko kwenye chuchu"]}
-{"query": "Maziwa ya mama yaliyokamuliwa hukaa muda gani bila kuharibika?", "gold": ["Maziwa yaliyokamuliwa yanaweza kuhifadhiwa", "yanaweza kuhifadhiwa katika joto la kawaida kwa saa 6- 8"]}
-{"query": "Maziwa ya kwanza ya njano yana faida gani kwa mtoto?", "gold": ["kolostramu"]}
-{"query": "Nianze kunyonyesha muda gani baada ya kujifungua?", "gold": ["ndani ya muda wa saa moja"]}
-{"query": "Namna sahihi ya kumshika mtoto anaponyonya", "gold": ["Tumbo la mtoto ligusane na tumbo lako", "Fundisha Kumpakata na Kumuweka Vizuri Mtoto Kwenye Titi"]}
-{"query": "Nitajuaje kama mtoto ananyonya vizuri?", "gold": ["Utatambua kuwa mtoto ananyonya vizuri", "Je mtoto mchanga ananyonya vizuri"]}
-{"query": "Mtoto anyonye mara ngapi usiku na mchana?", "gold": ["angalau mara 10 katika saa 24"]}
-{"query": "Dalili kwamba mtoto anapata maziwa ya kutosha", "gold": ["haja ndogo angalau mara 6 kwa siku"]}
-{"query": "Kwa nini mama akamue maziwa yake?", "gold": ["Kuna sababu nyingi muhimu na za manufaa za kukamua", "Ili mtoto anywe maziwa yako wakati wewe uko mbali"]}
-{"query": "Jinsi ya kukamua titi kwa mkono", "gold": ["Weka kidole gumba juu ya sehemu nyeusi ya titi", "Kamua titi moja kwa dakika 3 hadi 5"]}
-{"query": "Jinsi ya kupika nyama na mboga kwa usalama", "gold": ["Pika nyama, samaki na mayai mpaka viive kabisa"]}
-{"query": "Mjamzito aanze kliniki lini?", "gold": ["Anza kuhudhuria kiliniki ya wajawazito"]}
-{"query": "Mama mjamzito aongezeke uzito kiasi gani?", "gold": ["Kuongeza uzito angalau kilo 12 wakati wa ujauzito"]}
-{"query": "Kwa nini nisinywe chai wakati wa kula nikiwa mjamzito?", "gold": ["Kuepuka kunywa chai au kahawa pamoja na mlo"]}
-{"query": "Vidonge vya kuongeza damu wakati wa ujauzito", "gold": ["vidonge vya madini ya chuma na vya foliki asidi"]}
-{"query": "Mifano ya vyakula vya protini kama maharage na samaki", "gold": ["Vyakula vya Jamii ya Kunde na vya Asili ya Wanyama"]}
-{"query": "Mtoto ana degedege afanyiwe nini?", "gold": ["Toa Diazepam kwa njia ya Puru"]}
-{"query": "Mtoto anaharisha na amepungukiwa maji mwilini", "gold": ["Tibu Upungufu Kiasi wa Maji na Chumvichumvi Mwilini kwa ORS", "Kutibu Haraka Upungufu Mkubwa wa Maji"]}
-{"query": "Dawa ya homa kali kwa mtoto", "gold": ["TOA PARACETAMOL KWA HOMA KALI", "Toa kipimo kimoja cha paracetamol kwa homa kali"]}
-{"query": "Mtoto ana malaria kali apewe dawa gani?", "gold": ["Toa Artesunate au quinine kwa Malaria kali", "Toa Artesunate ya msuli"]}
-{"query": "Sikio la mtoto linatoa usaha", "gold": ["Kausha sikio kwa utambi"]}
-{"query": "Mtoto ana vidonda vyeupe mdomoni", "gold": ["Tibu vidonda au utando mweupe mdomoni kwa Gentian Violet", "Kama ana vidonda vya mdomoni tibu kwa GV"]}
-{"query": "Ngozi na macho ya mtoto mchanga ni ya njano", "gold": ["rangi ya njano kwenye macho au ngozi", "Uso na macho ni njano", "huduma ya mwanga (phototherapy)"]}
-{"query": "Kitu kimeingia kwenye jicho la mtoto", "gold": ["Jeraha au kitu kigeni kwenye jicho", "Angalia uwepo wa kitu kigeni kwenye jicho"]}
+{"id": "h001", "query": "Mtoto wa miezi sita aanze kula chakula gani?", "gold": ["Anza chakula cha nyongeza mtoto anapotimiza miezi 6"], "who": "caregiver"}
+{"id": "h002", "query": "Mtoto ambaye hanyonyi anahitaji maziwa kiasi gani kwa siku?", "gold": ["vikombe 2 (500 ml) vya maziwa"], "who": "caregiver"}
+{"id": "h003", "query": "Mtoto wa miezi minane ale mara ngapi kwa siku?", "gold": ["Umri wa miezi 7 – 8"], "who": "caregiver"}
+{"id": "h004", "query": "Je, ni vibaya kumpa mtoto mdogo soda au chai?", "gold": ["vinywaji visivyo na virutubisho"], "who": "caregiver"}
+{"id": "h005", "query": "Mtoto wa mwaka mmoja na nusu ale kiasi gani kila mlo?", "gold": ["Umri wa miezi 12 – 24"], "who": "caregiver"}
+{"id": "h006", "query": "Nifanye nini kuhusu chakula mtoto akiwa anaumwa?", "gold": ["Mtoto akiwa mgonjwa mpe milo midogo"], "who": "caregiver"}
+{"id": "h007", "query": "Kwa nini mtoto apelekwe kliniki kila mwezi?", "gold": ["Endelea kumpeleka mtoto kwenye kiliniki kila mwezi"], "who": "caregiver"}
+{"id": "h008", "query": "Je, mtoto mchanga anaweza kunywa maji kabla ya miezi sita?", "gold": ["Mtoto asipewe chakula kingine chochote hata maji"], "who": "caregiver"}
+{"id": "h009", "query": "Mama mwenye VVU amlishe mtoto vipi?", "gold": ["Kwa mama aliyeambukizwa VVU ni muhimu kumwona mtoa huduma", "Mama aliyeambukizwa VVU anaweza kumuambukiza mtoto"], "who": "caregiver"}
+{"id": "h010", "query": "Kwa nini watoto wanahitaji kula mara nyingi?", "gold": ["matumbo yao ni madogo"], "who": "caregiver"}
+{"id": "h011", "query": "Usafi wa mikono kabla ya kumlisha mtoto", "gold": ["anawe mikono yake kwa sabuni na maji safi yanayotiririka kabla ya kutayarisha chakula"], "who": "caregiver"}
+{"id": "h012", "query": "Kwa nini nisitumie chupa ya kunyonyea?", "gold": ["Epuka kutumia chupa na chuchu kwa vile ni vigumu kuzisafisha"], "who": "caregiver"}
+{"id": "h013", "query": "Je, ninaweza kumpa mtoto chakula kilicholala usiku?", "gold": ["Usimpe chakula kilichobaki au kiporo"], "who": "caregiver"}
+{"id": "h014", "query": "Ninawezaje kuongeza nguvu kwenye uji wa mtoto?", "gold": ["Boresha uji na chakula cha mtoto", "Chakula cha mtoto huweza kuongezwa mafuta na sukari"], "who": "caregiver"}
+{"id": "h015", "query": "Chuchu zangu zinauma ninaponyonyesha", "gold": ["Kama chuchu zina michubuko au maumivu", "Ukipata michubuko kwenye chuchu"], "who": "caregiver"}
+{"id": "h016", "query": "Maziwa ya mama yaliyokamuliwa hukaa muda gani bila kuharibika?", "gold": ["Maziwa yaliyokamuliwa yanaweza kuhifadhiwa", "yanaweza kuhifadhiwa katika joto la kawaida kwa saa 6- 8"], "who": "caregiver"}
+{"id": "h017", "query": "Maziwa ya kwanza ya njano yana faida gani kwa mtoto?", "gold": ["kolostramu"], "who": "caregiver"}
+{"id": "h018", "query": "Nianze kunyonyesha muda gani baada ya kujifungua?", "gold": ["ndani ya muda wa saa moja"], "who": "caregiver"}
+{"id": "h019", "query": "Namna sahihi ya kumshika mtoto anaponyonya", "gold": ["Tumbo la mtoto ligusane na tumbo lako", "Fundisha Kumpakata na Kumuweka Vizuri Mtoto Kwenye Titi"], "who": "caregiver"}
+{"id": "h020", "query": "Nitajuaje kama mtoto ananyonya vizuri?", "gold": ["Utatambua kuwa mtoto ananyonya vizuri", "Je mtoto mchanga ananyonya vizuri"], "who": "caregiver"}
+{"id": "h021", "query": "Mtoto anyonye mara ngapi usiku na mchana?", "gold": ["angalau mara 10 katika saa 24"], "who": "caregiver"}
+{"id": "h022", "query": "Dalili kwamba mtoto anapata maziwa ya kutosha", "gold": ["haja ndogo angalau mara 6 kwa siku"], "who": "caregiver"}
+{"id": "h023", "query": "Kwa nini mama akamue maziwa yake?", "gold": ["Kuna sababu nyingi muhimu na za manufaa za kukamua", "Ili mtoto anywe maziwa yako wakati wewe uko mbali"], "who": "caregiver"}
+{"id": "h024", "query": "Jinsi ya kukamua titi kwa mkono", "gold": ["Weka kidole gumba juu ya sehemu nyeusi ya titi", "Kamua titi moja kwa dakika 3 hadi 5"], "who": "caregiver"}
+{"id": "h025", "query": "Jinsi ya kupika nyama na mboga kwa usalama", "gold": ["Pika nyama, samaki na mayai mpaka viive kabisa"], "who": "caregiver"}
+{"id": "h026", "query": "Mjamzito aanze kliniki lini?", "gold": ["Anza kuhudhuria kiliniki ya wajawazito"], "who": "caregiver"}
+{"id": "h027", "query": "Mama mjamzito aongezeke uzito kiasi gani?", "gold": ["Kuongeza uzito angalau kilo 12 wakati wa ujauzito"], "who": "caregiver"}
+{"id": "h028", "query": "Kwa nini nisinywe chai wakati wa kula nikiwa mjamzito?", "gold": ["Kuepuka kunywa chai au kahawa pamoja na mlo"], "who": "caregiver"}
+{"id": "h029", "query": "Vidonge vya kuongeza damu wakati wa ujauzito", "gold": ["vidonge vya madini ya chuma na vya foliki asidi"], "who": "caregiver"}
+{"id": "h030", "query": "Mifano ya vyakula vya protini kama maharage na samaki", "gold": ["Vyakula vya Jamii ya Kunde na vya Asili ya Wanyama"], "who": "caregiver"}
+{"id": "h031", "query": "Mtoto ana degedege afanyiwe nini?", "gold": ["Toa Diazepam kwa njia ya Puru"], "who": "clinician"}
+{"id": "h032", "query": "Mtoto anaharisha na amepungukiwa maji mwilini", "gold": ["Tibu Upungufu Kiasi wa Maji na Chumvichumvi Mwilini kwa ORS", "Kutibu Haraka Upungufu Mkubwa wa Maji"], "who": "clinician"}
+{"id": "h033", "query": "Dawa ya homa kali kwa mtoto", "gold": ["TOA PARACETAMOL KWA HOMA KALI", "Toa kipimo kimoja cha paracetamol kwa homa kali"], "who": "clinician"}
+{"id": "h034", "query": "Mtoto ana malaria kali apewe dawa gani?", "gold": ["Toa Artesunate au quinine kwa Malaria kali", "Toa Artesunate ya msuli"], "who": "clinician"}
+{"id": "h035", "query": "Sikio la mtoto linatoa usaha", "gold": ["Kausha sikio kwa utambi"], "who": "clinician"}
+{"id": "h036", "query": "Mtoto ana vidonda vyeupe mdomoni", "gold": ["Tibu vidonda au utando mweupe mdomoni kwa Gentian Violet", "Kama ana vidonda vya mdomoni tibu kwa GV"], "who": "clinician"}
+{"id": "h037", "query": "Ngozi na macho ya mtoto mchanga ni ya njano", "gold": ["rangi ya njano kwenye macho au ngozi", "Uso na macho ni njano", "huduma ya mwanga (phototherapy)"], "who": "clinician"}
+{"id": "h038", "query": "Kitu kimeingia kwenye jicho la mtoto", "gold": ["Jeraha au kitu kigeni kwenye jicho", "Angalia uwepo wa kitu kigeni kwenye jicho"], "who": "clinician"}
+{"id": "h039", "query": "Mtoto wa miezi sita apewe vijiko vingapi vya chakula?", "gold": ["Mlishe vijiko 2-3 vya chakula kila mlo"], "who": "caregiver"}
+{"id": "h040", "query": "Siwezi kupata maziwa kwa mtoto asiyenyonya, nifanye nini?", "gold": ["Kama huwezi kupata maziwa, mwone mnasihi"], "who": "caregiver"}
+{"id": "h041", "query": "Mtoto wa miezi kumi ale chakula cha aina gani?", "gold": ["Umri wa miezi 9 – 11"], "who": "caregiver"}
+{"id": "h042", "query": "Mtoto wa miaka miwili anaweza kula chakula cha familia?", "gold": ["Vyakula vinavyoliwa na familia"], "who": "caregiver"}
+{"id": "h043", "query": "Je, maziwa ya ng'ombe yachemshwe kabla ya kumpa mtoto?", "gold": ["Maziwa halisi ya wanyama na maji wanayopewa watoto lazima yachemshwe"], "who": "caregiver"}
+{"id": "h044", "query": "Juisi ya matunda inafaa kwa mtoto mdogo?", "gold": ["Mpe mtoto maji ya matunda halisi kwa kiasi"], "who": "caregiver"}
+{"id": "h045", "query": "Mtoto akipona ugonjwa nimwongezee chakula?", "gold": ["Akipona ongeza kiasi cha chakula na idadi ya milo"], "who": "caregiver"}
+{"id": "h046", "query": "Uzito wa mtoto ukiongezeka inaonyesha nini?", "gold": ["Kuongezeka uzito ni ishara ya afya bora"], "who": "caregiver"}
+{"id": "h047", "query": "Kwa nini maziwa ya mama peke yake hayatoshi baada ya miezi sita?", "gold": ["Baada ya miezi 6 maziwa ya mama pekee hayatoshelezi"], "who": "caregiver"}
+{"id": "h048", "query": "Mtoto aendelee kunyonya hadi umri gani?", "gold": ["Maziwa ya mama huendelea kuwa sehemu muhimu"], "who": "caregiver"}
+{"id": "h049", "query": "Nianze na titi au chakula ninapomlisha mtoto wa miezi tisa?", "gold": ["kila mara mpe maziwa kwanza kabla ya kumpa chakula kingine"], "who": "caregiver"}
+{"id": "h050", "query": "Uji wa kwanza wa mtoto uwe mzito au mwepesi?", "gold": ["chakula cha mtoto kiwe laini, lakini kisiwe chepesi"], "who": "caregiver"}
+{"id": "h051", "query": "Niviweke wapi vyombo vya kulishia mtoto baada ya kuviosha?", "gold": ["Vyombo vyote vinavyotumika vioshwe vizuri"], "who": "caregiver"}
+{"id": "h052", "query": "Mtoto awe na sahani na kikombe chake mwenyewe?", "gold": ["Mtoto anapaswa kuwa na vyombo vyake vya kulia chakula"], "who": "caregiver"}
+{"id": "h053", "query": "Je, nimwache mtoto ale peke yake bila mtu kumwangalia?", "gold": ["Mtoto ajifunze taratibu kula mwenyewe"], "who": "caregiver"}
+{"id": "h054", "query": "Mtoto anahitaji vyakula gani vya protini kila siku?", "gold": ["vyakula vya jamii ya kunde, nyama, kuku, samaki au mayai kila siku"], "who": "caregiver"}
+{"id": "h055", "query": "Kwa nini niweke mafuta kidogo kwenye chakula cha mtoto?", "gold": ["Mafuta pia husaidia ufyonzwaji"], "who": "caregiver"}
+{"id": "h056", "query": "Ndani ya mdomo wa mtoto kuna utando mweupe", "gold": ["Kila wakati chunguza kinywa cha mtoto", "Tibu vidonda au utando mweupe mdomoni"], "who": "caregiver"}
+{"id": "h057", "query": "Je, ni kawaida kunyonyesha kuume?", "gold": ["Kunyonyesha hakusababishi maumivu"], "who": "caregiver"}
+{"id": "h058", "query": "Matiti yangu yamejaa sana na yanauma", "gold": ["Iwapo matiti yamejaa sana, yanauma", "matiti yako yanaweza kujaa mno", "huzuia matiti kujaa sana"], "who": "caregiver"}
+{"id": "h059", "query": "Je, ni sawa kumpa mtoto maji pamoja na maziwa ya mama kabla ya miezi sita?", "gold": ["Ulishaji wa mtoto unaochanganya maziwa ya mama", "Mtoto asipewe chakula kingine chochote hata maji", "Kunyonyesha maziwa ya mama pekee inamaanisha"], "who": "caregiver"}
+{"id": "h060", "query": "Nipake krimu kwenye chuchu zenye vidonda?", "gold": ["Usitumie kitu kingine chochote kama krimu"], "who": "caregiver"}
+{"id": "h061", "query": "Mama mwenye VVU ambaye chuchu zake zinatoa damu aendelee kunyonyesha?", "gold": ["chuchu zina michubuko au zinatoa damu ni bora kukamua na kumwaga"], "who": "caregiver"}
+{"id": "h062", "query": "Dalili gani zinanilazimu kumpeleka mtoto hospitali haraka?", "gold": ["Kuwa makini na dalili za kuhara, homa, kupumua kwa shida", "Mshauri mama kurudi haraka kama mtoto atakuwa na dalili"], "who": "caregiver"}
+{"id": "h063", "query": "Kwa nini nitumie kondomu wakati ninanyonyesha?", "gold": ["Maambukizi mapya ya VVU wakati wa kunyonyesha"], "who": "caregiver"}
+{"id": "h064", "query": "Je, maziwa ya mama yanampa mtoto maji ya kutosha?", "gold": ["Humpatia virutubishi vyote na maji anayohitaji"], "who": "caregiver"}
+{"id": "h065", "query": "Mtoto anayenyonya maziwa ya mama pekee anaweza kupewa dawa?", "gold": ["isipokuwa dawa zilizoshauriwa na daktari"], "who": "caregiver"}
+{"id": "h066", "query": "Je, kila mtoto wa mama mwenye VVU ataambukizwa?", "gold": ["siyo watoto wote wanaambukizwa"], "who": "caregiver"}
+{"id": "h067", "query": "Mdomo wa mtoto ukae wapi kwenye chuchu?", "gold": ["ukilenga mdomo wa chini wa mtoto kuwa chini kidogo ya chuchu", "eneo jeusi linalozunguka chuchu limeingia kinywani"], "who": "caregiver"}
+{"id": "h068", "query": "Nikisikia maumivu mtoto anaponyonya nifanye nini?", "gold": ["mtoe mtoto taratibu kwenye titi na jaribu tena"], "who": "caregiver"}
+{"id": "h069", "query": "Nimbadilishie mtoto titi lini?", "gold": ["Mwache mtoto anyonye titi moja mpaka aachie mwenyewe"], "who": "caregiver"}
+{"id": "h070", "query": "Mtoto analia na kutaka kunyonya kila wakati, kuna tatizo?", "gold": ["Endapo mtoto analia na kuhitaji kunyonya mara kwa mara"], "who": "caregiver"}
+{"id": "h071", "query": "Mtoto alale wapi ili iwe rahisi kumnyonyesha usiku?", "gold": ["Mtoto alale karibu nawe"], "who": "caregiver"}
+{"id": "h072", "query": "Mkojo wa mtoto anayeshiba maziwa unakuwaje?", "gold": ["Mkojo wake unatakiwa kuwa na rangi ambayo haikukolea"], "who": "caregiver"}
+{"id": "h073", "query": "Nimnyweshe mtoto maziwa yaliyokamuliwa kwa kutumia nini?", "gold": ["haraka kunywa kwa kikombe.", "mtoto mchanga hujifunza haraka kunywa kwa kikombe"], "who": "caregiver"}
+{"id": "h074", "query": "Maziwa yaliyobaki kwenye kikombe baada ya mtoto kunywa nifanye nini?", "gold": ["yaliyobaki kwenye kikombe yamwagwe"], "who": "caregiver"}
+{"id": "h075", "query": "Chupa ya kunyonyea inaweza kumfanya mtoto akatae titi?", "gold": ["kumfanya akatae kunyonya"], "who": "caregiver"}
+{"id": "h076", "query": "Mtoto njiti asiyeweza kunyonya atapata maziwa ya mama vipi?", "gold": ["Iwapo mtoto amezaliwa njiti"], "who": "caregiver"}
+{"id": "h077", "query": "Mtoto wangu ni dhaifu na anakataa kunyonya", "gold": ["Iwapo mtoto ni dhaifu au anakataa kunyonya"], "who": "caregiver"}
+{"id": "h078", "query": "Nifanye nini ili maziwa yatoke kwa urahisi kabla ya kukamua?", "gold": ["kukanda matiti kwa kitambaa cha uvuguvugu", "ya juu ya mgongo inaweza kusaidia maziwa kutoka"], "who": "caregiver"}
+{"id": "h079", "query": "Je, kukamua maziwa kunapaswa kuuma?", "gold": ["Njia hii haipaswi kukuumiza"], "who": "caregiver"}
+{"id": "h080", "query": "Nifinye chuchu yenyewe ninapokamua maziwa?", "gold": ["Usikamue chuchu au kusugua vidole"], "who": "caregiver"}
+{"id": "h081", "query": "Inachukua muda gani kukamua maziwa yote?", "gold": ["huchukua dakika 20 mpaka 30"], "who": "caregiver"}
+{"id": "h082", "query": "Maziwa ya mama kwenye friza yanakaa muda gani?", "gold": ["saa72 kwenye jokofu la kugandisha", "saa 72 kwenye jokofu la kugandisha"], "who": "caregiver"}
+{"id": "h083", "query": "Mama akiwa mgonjwa aendelee kutoa maziwa?", "gold": ["Kusaidia maziwa yaendelee kutengenezwa iwapo mtoto au mama anaumwa"], "who": "caregiver"}
+{"id": "h084", "query": "Maziwa ya mama yanaweza kuponya chuchu zenye mipasuko?", "gold": ["Kupakaa kama tiba kwenye chuchu", "pakaa maziwa yako na yaache yakauke"], "who": "caregiver"}
+{"id": "h085", "query": "Mboga zipikwe vipi zisipoteze virutubishi?", "gold": ["Osha mbogamboga kabla ya kuzikatakata"], "who": "caregiver"}
+{"id": "h086", "query": "Je, mama mjamzito anaweza kunywa pombe au kuvuta sigara?", "gold": ["Usitumie pombe, dawa za kulevya"], "who": "caregiver"}
+{"id": "h087", "query": "Dawa za minyoo wakati wa ujauzito", "gold": ["Tumia vidonge vya kutibu minyoo"], "who": "caregiver"}
+{"id": "h088", "query": "Nitajuaje kama nina virusi vya UKIMWI?", "gold": ["Ili kujua hali yako ya maambukizi ya VVU inabidi upime damu", "Ni muhimu wanawake wote kujua hali zao"], "who": "caregiver"}
+{"id": "h089", "query": "Mama mwenye VVU atumie dawa gani?", "gold": ["tumia dawa za ARVs"], "who": "caregiver"}
+{"id": "h090", "query": "Je, mtu mwenye VVU anahitaji kula zaidi?", "gold": ["unahitaji chakula cha nyongeza kupata nguvu zaidi"], "who": "caregiver"}
+{"id": "h091", "query": "Mama mjamzito apumzike lini zaidi?", "gold": ["Pumzika mchana hasa miezi 3 ya mwisho"], "who": "caregiver"}
+{"id": "h092", "query": "Kujikinga na malaria nikiwa mjamzito", "gold": ["Tumia dawa za kuzuia malaria na chandarua"], "who": "caregiver"}
+{"id": "h093", "query": "Nisubiri muda gani kabla ya kubeba mimba nyingine?", "gold": ["kusubiri miaka 3 baada ya kujifungua"], "who": "caregiver"}
+{"id": "h094", "query": "Mama mjamzito ale milo mingapi kwa siku?", "gold": ["Kula walau milo 3 iliyo kamili"], "who": "caregiver"}
+{"id": "h095", "query": "Mifano ya vyakula vya wanga kama ugali na muhogo", "gold": ["Vyakula vya Nafaka, Viazi, Muhogo na Ndizi"], "who": "caregiver"}
+{"id": "h096", "query": "Ni matunda gani mazuri kwa mama mjamzito?", "gold": ["Matunda kwa mfano: embe"], "who": "caregiver"}
+{"id": "h097", "query": "Lishe bora inaweza kuzuia mtoto kuzaliwa kabla ya wakati?", "gold": ["kujifungua kabla ya wakati"], "who": "caregiver"}
+{"id": "h098", "query": "Kwa nini mama anayenyonyesha anahitaji chakula zaidi kuliko mjamzito?", "gold": ["Mahitaji ya chakula na virutubishi ni makubwa unaponyonyesha"], "who": "caregiver"}
+{"id": "h099", "query": "Mama mjamzito anywe maji kiasi gani kwa siku?", "gold": ["Kunywa maji ya kutosha kila siku (glasi 8"], "who": "caregiver"}
+{"id": "h100", "query": "Chumvi yenye madini joto ina faida gani?", "gold": ["tumia chumvi yenye madini joto"], "who": "caregiver"}
+{"id": "h101", "query": "Matone ya vitamini A baada ya kujifungua", "gold": ["Kunywa matone ya vitamin A mara baada ya kujifungua", "Kwa mama ambaye hajapata matone ya Vit A"], "who": "caregiver"}
+{"id": "h102", "query": "Vidonge vya madini ya chuma vinaniletea kichefuchefu", "gold": ["hasa kichefuchefu"], "who": "caregiver"}
+{"id": "h103", "query": "Mama mjamzito hana hamu ya kula, ale vipi?", "gold": ["kula milo midogo midogo mara nyingi"], "who": "caregiver"}
+{"id": "h104", "query": "Mtoto hawezi kunywa wala kunyonya kabisa", "gold": ["Je, mtoto hawezi kunyonya au kunywa kabisa?", "Angalia kama mtoto hawezi kunywa au kunyonya kabisa"], "who": "clinician"}
+{"id": "h105", "query": "Jinsi ya kuhesabu kasi ya kupumua kwa mtoto", "gold": ["Hesabu pumzi kwa dakika moja"], "who": "clinician"}
+{"id": "h106", "query": "Kitovu cha mtoto mchanga kina wekundu au usaha", "gold": ["Angalia kitovu"], "who": "clinician"}
+{"id": "h107", "query": "Mama aligundulika na kifua kikuu kabla ya kujifungua", "gold": ["mama amegundulika ana kifua kikuu"], "who": "clinician"}
+{"id": "h108", "query": "Mtoto anaharisha kinyesi chenye damu", "gold": ["Kuna damu kwenye kinyesi?", "na kama kinyesi kina damu"], "who": "clinician"}
+{"id": "h109", "query": "Kupima upungufu wa maji kwa kufinya ngozi ya tumbo", "gold": ["Finya ngozi ya tumbo"], "who": "clinician"}
+{"id": "h110", "query": "Macho ya mtoto yameingia ndani", "gold": ["Angalia macho kuingia ndani"], "who": "clinician"}
+{"id": "h111", "query": "Mtoto mchanga hasogei hata akitingishwa", "gold": ["Je, mtoto hachezi hata baada ya kutingishwa"], "who": "clinician"}
+{"id": "h112", "query": "Viganja vya mikono na nyayo za mtoto mchanga ni njano", "gold": ["Viganja na nyayo ni njano"], "who": "clinician"}
+{"id": "h113", "query": "Kipimo cha VVU cha mama kimeonyesha ana maambukizi", "gold": ["Kipimo cha VVU kwa mama ni chanya"], "who": "clinician"}
+{"id": "h114", "query": "Haijulikani kama mama na mtoto wana VVU", "gold": ["Hali ya uambukizo wa VVU kwa mama na mtoto haijulikani"], "who": "clinician"}
+{"id": "h115", "query": "Kipimo cha PCR cha mtoto kimeonyesha VVU", "gold": ["PCR kwa mtoto ni chanya"], "who": "clinician"}
+{"id": "h116", "query": "Mtoto mchanga anapewa vinywaji vingine zaidi ya maziwa ya mama?", "gold": ["mtoto mchanga anapata vyakula au vinywaji vingine"], "who": "clinician"}
+{"id": "h117", "query": "Kwa muda gani nimwangalie mtoto akinyonya?", "gold": ["Angalia unyonyeshaji kwa dakika 4"], "who": "clinician"}
+{"id": "h118", "query": "Dalili za mtoto kukaa vizuri kwenye titi", "gold": ["Kidevu kinagusa titi", "kidevu kinagusa titi", "Je, mtoto anaweza kukaa kwenye titi?"], "who": "clinician"}
+{"id": "h119", "query": "Mama mwenye VVU ameamua kutonyonyesha, mtoto anywe maziwa gani?", "gold": ["Maziwa mbadala (Replacement milk)"], "who": "clinician"}
+{"id": "h120", "query": "Mtoto alizaliwa na uzito chini ya gramu 1500", "gold": ["Uzito < ya gram 1500"], "who": "clinician"}
+{"id": "h121", "query": "Chanjo za mtoto mchanga kama BCG na polio", "gold": ["ANGALIA HALI YA CHANJO YA MTOTO MCHANGA", "OPV0 OPV1 OPV2"], "who": "clinician"}
+{"id": "h122", "query": "Je, mtoto amepata vitamini A katika miezi sita iliyopita?", "gold": ["Je mtoto amepewa Vit A katika kipindi cha miezi 6"], "who": "clinician"}
+{"id": "h123", "query": "Uvimbe wa tezi shingoni na kwapani", "gold": ["Uvimbe wa tezi kwenye sehemu mbili"], "who": "clinician"}
+{"id": "h124", "query": "Mtoto amekohoa kwa wiki mbili au zaidi", "gold": ["Kukohoa siku 14 au zaidi"], "who": "clinician"}
+{"id": "h125", "query": "Mtoto anaharisha bila upungufu wa maji, atibiwe nyumbani vipi?", "gold": ["Taratibu A: Tibu Kuharisha Nyumbani"], "who": "clinician"}
+{"id": "h126", "query": "Mtoto apewe ORS akiwa njiani kwenda hospitali ya rufaa?", "gold": ["aendelee kumpa ORS kidogo kidogo akiwa njiani", "ampe ORS kidogokidogoakiwa njiani", "kumpa ORS kidogo kidogo akiwa njiani"], "who": "clinician"}
+{"id": "h127", "query": "Kuna kipindupindu katika eneo letu na mtoto anaharisha", "gold": ["kuna kipindupindu kwenye eneo hilo"], "who": "clinician"}
+{"id": "h128", "query": "Mtoto ameharisha kwa siku kumi na nne au zaidi", "gold": ["na kama kuharisha siku 14 au zaidi", "KUHARISHA SUGU"], "who": "clinician"}
+{"id": "h129", "query": "Kipimo cha artesunate kwa mtoto chini ya kilo ishirini", "gold": ["Artesunate 3mg/kg"], "who": "clinician"}
+{"id": "h130", "query": "Baada ya sindano za malaria mtoto amalizie na vidonge gani?", "gold": ["vidonge vya alu kukamilisha matibabu"], "who": "clinician"}
+{"id": "h131", "query": "Homa haijashuka baada ya siku chache za matibabu", "gold": ["baada ya siku 3 kuona kama homa imeendelea", "ufuatiliaji baada ya siku 2 kama homa inaendelea"], "who": "clinician"}
+{"id": "h132", "query": "Mtoto ana kikohozi na koo linauma", "gold": ["Lainisha koo na tuliza kikohozi"], "who": "clinician"}
+{"id": "h133", "query": "Mtoto ana upungufu wa damu apewe nini?", "gold": ["TOA MADINI YA CHUMA", "UPUNGUFU MKUBWA WA DAMU"], "who": "clinician"}
+{"id": "h134", "query": "Jicho la mtoto limeungua kwa kemikali", "gold": ["Ikiwa jeraha linatokana na kemikali"], "who": "clinician"}
+{"id": "h135", "query": "Jinsi ya kufunika jicho lililoumia", "gold": ["Funika jicho kwa bandeji"], "who": "clinician"}
+{"id": "h136", "query": "Dawa ya macho itolewe mara ngapi na kwa siku ngapi?", "gold": ["mara tatu kila siku kwa siku 5"], "who": "clinician"}
+{"id": "h137", "query": "Mtoto anaogopa mwanga na macho yamevimba", "gold": ["Anaogopa kuangalia mwanga"], "who": "clinician"}
+{"id": "h138", "query": "Macho yanawasha na kutoa machozi bila kuwa mekundu", "gold": ["Macho kuwasha/machozi kutiririka bila wekundu"], "who": "clinician"}
+{"id": "h139", "query": "Mtoto mchanga ana baridi na joto la mwili liko chini", "gold": ["joto la mwili chini ya 35.5C", "Mshauri mama kumpatia mtoto joto wakati wote", "Hakikisha mtoto anapata joto"], "who": "clinician"}
+{"id": "h140", "query": "Rufaa haiwezekani, mtoto mwenye nimonia kali atibiwe vipi?", "gold": ["NIMONIA KALI AU UGONJWA MKALI SANA", "MATIBABU MAHALI RUFAA YA HARAKA HAIWEZEKANI"], "who": "clinician"}
+{"id": "h141", "query": "Gentamicin kwa mtoto aliyezaliwa na uzito mdogo", "gold": ["Kwa watoto waliozaliwa na uzito pungufu, toa Gentamicin"], "who": "clinician"}
+{"id": "h142", "query": "Kiwango cha Amoxicillin kwa mtoto mchanga", "gold": ["Amoxcillin DT 50mg/kg", "Amoxcillin DT, 50mg/kg"], "who": "clinician"}
+{"id": "h143", "query": "Mtoto ana surua kali na vidonda mdomoni", "gold": ["SURUA KALI"], "who": "clinician"}
+{"id": "h144", "query": "Mtoto amekonda sana kutokana na utapiamlo", "gold": ["UTAPIAMLO MKALI SANA"], "who": "clinician"}
+{"id": "h145", "query": "Kumzuia mtoto mgonjwa asipungukiwe sukari mwilini", "gold": ["upungufu wa sukari mwilini", "Upungufu wa Sukari Mwilini"], "who": "clinician"}
+{"id": "h146", "query": "Mtoto mgonjwa anywe vinywaji zaidi?", "gold": ["Mshauri Mama Kuongeza Vinywaji", "vinywaji kwa wingi"], "who": "clinician"}
+{"id": "h147", "query": "Mtoto ana degedege sasa hivi", "gold": ["Angalia kama mtoto ana degedege sasa", "Je, mtoto amewahi kupata degedege"], "who": "clinician"}
+{"id": "h148", "query": "Mtoto anatoa sauti ya kuguna anapopumua", "gold": ["grunting"], "who": "clinician"}
+{"id": "h149", "query": "Kifua cha mtoto kinabonyea sana anapopumua", "gold": ["Angalia kifua kubonyea sana"], "who": "clinician"}
+{"id": "h150", "query": "Mtoto mchanga ana macho yanayotoa usaha mwingi", "gold": ["Macho yanatoa usaha mwingi?", "Toa kipimo cha Tetractycline ya macho"], "who": "clinician"}

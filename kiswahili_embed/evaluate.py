@@ -23,9 +23,10 @@ and we report recall@1, recall@10 and mean reciprocal rank.
 
 With ``--docs`` (the health documents; see ``documents.py`` for the held-out ones):
 
-``health``          38 hand-written questions -> the held-out paragraph(s) that answer them (pool:
+``health``          150 hand-written questions (95 caregiver, 55 clinician voice) -> the held-out paragraph(s) that answer them (pool:
                     all ~290 held-out paragraphs, mostly same-topic distractors)
 ``health+bible``    the same plus 2,000 Bible distractors
+``health:caregiver`` / ``health:clinician``  the same split by who is asking
 ``health-noise``    noisy -> clean held-out health sentences
 
 The noise and next-sentence tasks come from the same generator as the training pairs, so they
@@ -85,9 +86,11 @@ def search_task(path: Path, distractors: List[str]) -> tuple:
     return [it["query"] for it in items], pool, list(range(len(items))), "passage"
 
 
-def health_task(path: Path, pool: List[str], distractors: List[str]) -> tuple:
-    """Questions whose answer is any pool paragraph containing one of the ``gold`` phrases."""
+def health_task(path: Path, pool: List[str], distractors: List[str], who: str = "") -> tuple:
+    """Questions whose answer is any pool paragraph containing one of the ``gold`` phrases.
+    ``who`` keeps only questions written in that voice ("caregiver" or "clinician")."""
     items = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    items = [it for it in items if not who or it.get("who") == who]
     gold = [[j for j, para in enumerate(pool) if any(g in para for g in it["gold"])] for it in items]
     missing = [it["query"] for it, g in zip(items, gold) if not g]
     if missing:
@@ -117,6 +120,8 @@ def run(model: str, limit: int = 1000, seed: int = 7,
         qa = DATA_DIR / "health_search_eval.jsonl"
         tasks["health"] = health_task(qa, pool, [])
         tasks["health+bible"] = health_task(qa, pool, rng.sample(bible_test, 2000))
+        tasks["health:caregiver"] = health_task(qa, pool, [], who="caregiver")
+        tasks["health:clinician"] = health_task(qa, pool, [], who="clinician")
         test_sents = [s for d in test_docs for s in d.sentences]
         tasks["health-noise"] = noise_task(test_sents, seed, limit)
     return {name: retrieval(emb, *t) for name, t in tasks.items()}
@@ -132,9 +137,9 @@ def main(argv=None) -> None:
     args = ap.parse_args(argv)
     res = run(args.model, args.limit, docs=args.docs)
     print(f"model: {args.model}")
-    print(f"{'task':<14}{'r@1':>7}{'r@10':>7}{'mrr':>7}{'n':>6}{'pool':>6}")
+    print(f"{'task':<18}{'r@1':>7}{'r@10':>7}{'mrr':>7}{'n':>6}{'pool':>6}")
     for name, r in res.items():
-        print(f"{name:<14}{r['r@1']:>7.3f}{r['r@10']:>7.3f}{r['mrr']:>7.3f}{r['n']:>6}{r['pool']:>6}")
+        print(f"{name:<18}{r['r@1']:>7.3f}{r['r@10']:>7.3f}{r['mrr']:>7.3f}{r['n']:>6}{r['pool']:>6}")
     if args.json:
         args.json.write_text(json.dumps({"model": args.model, "results": res}, indent=2))
 

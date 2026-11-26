@@ -148,3 +148,13 @@ def test_doc_pairs_include_sections():
     doc = Document("d", ["Kula chakula bora kila siku ya wiki. Kunywa maji safi ya kutosha kila siku."])
     kinds = {p.kind for p in pairs.make_doc_pairs([doc], n_noise=1)}
     assert {"section", "neighbour", "noise"} <= kinds
+
+
+def test_health_eval_file_is_well_formed():
+    import json
+    path = corpus.DATA_DIR / "health_search_eval.jsonl"
+    items = [json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip()]
+    assert len(items) == 150
+    assert len({it["id"] for it in items}) == 150 and len({it["query"] for it in items}) == 150
+    assert {it["who"] for it in items} == {"caregiver", "clinician"}
+    assert all(it["gold"] and all(g.strip() for g in it["gold"]) for it in items)
