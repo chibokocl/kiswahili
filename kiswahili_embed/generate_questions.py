@@ -136,6 +136,14 @@ def ask(client, job: Dict) -> List[Dict]:
     return json.loads(text).get("queries", []) if text else []
 
 
+def fatal(e: Exception) -> bool:
+    """Errors that will fail every request (no credit, bad key): stop instead of retrying them all."""
+    import anthropic
+    if isinstance(e, (anthropic.AuthenticationError, anthropic.PermissionDeniedError)):
+        return True
+    return isinstance(e, anthropic.BadRequestError) and "credit balance" in str(e).lower()
+
+
 def validate(job: Dict, queries: Sequence[Dict]) -> List[Dict]:
     para = squash(job["para"])
     out, seen = [], set()
@@ -166,7 +174,8 @@ def run(docs_paths: Sequence[Path], out: Path, target: int, workers: int, pilot:
     if pilot:
         todo = todo[:pilot]
     print(f"{len(jobs)} paragraphs, {sum(j['n'] for j in jobs)} questions planned; "
-          f"{len(todo)} paragraphs to do now", file=sys.stderr)
+          f"{len(jobs) - len([j for j in jobs if j['para_id'] not in done])} already done, "
+          f"{len(todo)} to do now", file=sys.stderr)
     lock = threading.Lock()
     kept = asked = tin = tout = 0
     with ThreadPoolExecutor(workers) as pool, out.open("a", encoding="utf-8") as f, \
@@ -177,6 +186,11 @@ def run(docs_paths: Sequence[Path], out: Path, target: int, workers: int, pilot:
             try:
                 queries = fut.result()
             except Exception as e:                       # keep going; rerun resumes
+                if fatal(e):
+                    print(f"stopping: {type(e).__name__}: {e}\nNothing is lost: rerun the same "
+                          f"command to resume.", file=sys.stderr)
+                    pool.shutdown(wait=False, cancel_futures=True)
+                    break
                 print(f"error on {job['para_id']}: {type(e).__name__}: {e}", file=sys.stderr)
                 continue
             rows = validate(job, queries)

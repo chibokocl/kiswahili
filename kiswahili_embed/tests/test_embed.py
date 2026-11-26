@@ -191,3 +191,15 @@ def test_english_paragraphs_are_skipped():
     paras = clean_paragraphs("Breastfeed the child on demand, day and night, for health.\n\n"
                              "Mnyonyeshe mtoto mara kwa mara usiku na mchana.")
     assert paras == ["Mnyonyeshe mtoto mara kwa mara usiku na mchana."]
+
+
+def test_generator_stops_on_fatal_errors():
+    import anthropic
+    import httpx2 as httpx
+    from kiswahili_embed.generate_questions import fatal
+    req = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    credit = anthropic.BadRequestError(
+        "Your credit balance is too low to access the Anthropic API.",
+        response=httpx.Response(400, request=req), body=None)
+    other = anthropic.BadRequestError("prompt is too long", response=httpx.Response(400, request=req), body=None)
+    assert fatal(credit) and not fatal(other)
