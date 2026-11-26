@@ -45,8 +45,9 @@ def train(base: str, out: Path, n_pairs: int, epochs: int, batch_size: int, lr: 
         random.Random(seed).shuffle(pairs)
         if questions:
             from .pairs import Pair
-            from .generate_questions import para_id
-            by_id = {para_id(p): p for d in train_docs for p in d.paragraphs}
+            from .generate_questions import load_paragraphs, para_id
+            by_id = {k: v["text"] for k, v in load_paragraphs(questions).items()} or \
+                {para_id(p): p for d in train_docs for p in d.paragraphs}
             rows = [json.loads(l) for l in Path(questions).read_text(encoding="utf-8").splitlines() if l]
             qpairs = [Pair(r["question"], by_id[r["para_id"]], "question") for r in rows
                       if r["split"] == "train" and r["para_id"] in by_id]

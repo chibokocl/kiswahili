@@ -141,9 +141,17 @@ def run(model: str, limit: int = 1000, seed: int = 7,
         tasks["health:caregiver"] = health_task(qa, pool, [], who="caregiver")
         tasks["health:clinician"] = health_task(qa, pool, [], who="clinician")
         if questions and questions.exists():
-            tasks["generated"] = generated_task(questions, pool)
-            tasks["generated:caregiver"] = generated_task(questions, pool, "caregiver")
-            tasks["generated:clinician"] = generated_task(questions, pool, "clinician")
+            from .generate_questions import load_paragraphs
+            rows = [json.loads(l) for l in questions.read_text(encoding="utf-8").splitlines() if l]
+            test_ids = {r["para_id"] for r in rows if r["split"] == "test"}
+            saved = load_paragraphs(questions)
+            gpool = dedupe([saved[i]["text"] for i in saved if i in test_ids]) if saved else []
+            # every held-out paragraph is a candidate, not only those that got questions
+            gpool = dedupe(gpool + [v["text"] for v in saved.values()
+                                    if any(k in v["doc"] for k in ("IYCF", "Matibabu"))]) or pool
+            tasks["generated"] = generated_task(questions, gpool)
+            tasks["generated:caregiver"] = generated_task(questions, gpool, "caregiver")
+            tasks["generated:clinician"] = generated_task(questions, gpool, "clinician")
         test_sents = [s for d in test_docs for s in d.sentences]
         tasks["health-noise"] = noise_task(test_sents, seed, limit)
     return {name: retrieval(emb, *t) for name, t in tasks.items()}

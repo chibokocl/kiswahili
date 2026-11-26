@@ -115,6 +115,28 @@ def plan(docs, target: int) -> List[Dict]:
     return jobs
 
 
+def load_paragraphs(questions: Path) -> Dict[str, Dict]:
+    """para_id -> {"doc", "text"} from the ``paragraphs.jsonl`` saved next to a questions file.
+
+    Paragraph ids hash the text as extracted on the machine that generated the questions; another
+    poppler version can split a few lines differently, so training and evaluation read the text
+    from this file instead of re-extracting it.  Empty if the file is absent."""
+    path = Path(questions).with_name("paragraphs.jsonl")
+    if not path.exists():
+        return {}
+    rows = (json.loads(l) for l in path.read_text(encoding="utf-8").splitlines() if l.strip())
+    return {r["para_id"]: r for r in rows}
+
+
+def export_paragraphs(docs_paths: Sequence[Path], out: Path) -> int:
+    rows = {para_id(p): {"para_id": para_id(p), "doc": d.name, "text": p}
+            for d in load_documents(docs_paths) for p in d.paragraphs}
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in rows.values()),
+                   encoding="utf-8")
+    return len(rows)
+
+
 def ask(client, job: Dict) -> List[Dict]:
     prompt = (f"Document: {job['doc']}\n\nContext before (do not write queries about it):\n"
               f"{job['before'] or '-'}\n\nPARAGRAPH:\n{job['para']}\n\nContext after (do not write "
@@ -165,6 +187,7 @@ def run(docs_paths: Sequence[Path], out: Path, target: int, workers: int, pilot:
     client = anthropic.Anthropic(max_retries=6)
     jobs = plan(load_documents(docs_paths), target)
     out.parent.mkdir(parents=True, exist_ok=True)
+    export_paragraphs(docs_paths, out.with_name("paragraphs.jsonl"))
     done = set()
     if out.exists():
         done = {json.loads(l)["para_id"] for l in out.read_text(encoding="utf-8").splitlines() if l}
