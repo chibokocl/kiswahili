@@ -28,6 +28,14 @@ BULLET = re.compile(r"\s*[•·▪●◦]\s*|(?:^|\n)\s*[A-Z]\s*(?=\n)")
 SENT_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z“\"(])")
 WORDS = re.compile(r"[A-Za-z']+")
 
+# Very common function words: a paragraph with more English than Kiswahili ones is skipped, so a
+# folder that also holds English documents (or English passages in a Swahili one) stays Kiswahili.
+SW_WORDS = set("""na ya wa kwa ni la za cha vya katika au kama kwamba hii hiyo huu wake yake
+mtoto watoto mama kila siku pia lakini ili baada kabla hadi zaidi sana kuwa kwenye mwili afya
+chakula maji je hana ana hapana ndiyo""".split())
+EN_WORDS = set("""the and of to in is for with that are be on or as by this from at your it an
+which can should have has not child children health food""".split())
+
 # Ligatures and look-alikes that NFKC does not fix in these PDFs.
 REPAIRS = {"Ɵ": "ti", "Į": "fi", "ƞ": "tt", "ﬀ": "ff", "­": ""}
 
@@ -54,6 +62,13 @@ def swahili_ratio(s: str) -> float:
     return sum(ch.isascii() and (ch.isalpha() or ch == " ") for ch in s) / max(1, len(s))
 
 
+def is_swahili(text: str) -> bool:
+    words = [w.lower() for w in WORDS.findall(text)]
+    sw = sum(w in SW_WORDS for w in words)
+    en = sum(w in EN_WORDS for w in words)
+    return sw >= en
+
+
 def clean_paragraphs(raw: str, min_words: int = 4) -> List[str]:
     text = normalise(raw)
     text = re.sub(r"(\w)-\n(\w)", r"\1\2", text)                # hyphenated line breaks
@@ -73,7 +88,7 @@ def clean_paragraphs(raw: str, min_words: int = 4) -> List[str]:
         para = re.sub(r"^D\s+(?=[A-Z])", "", para)              # 'D' rendered for a bullet glyph
         para = re.sub(r"\s+\d{1,3}\.?$", "", para)               # trailing page/item numbers
         if len(WORDS.findall(para)) >= min_words and swahili_ratio(para) >= 0.8 \
-                and "©" not in para and "http" not in para:
+                and "©" not in para and "http" not in para and is_swahili(para):
             out.append(para)
     return dedupe(out)
 

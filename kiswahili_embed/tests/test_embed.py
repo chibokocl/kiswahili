@@ -182,3 +182,12 @@ def test_generated_questions_validate_and_score(tmp_path):
     path.write_text("\n".join(json.dumps(r) for r in rows), encoding="utf-8")
     q, pool, gold, role = generated_task(path, docs[0].paragraphs)
     assert q == ["Mtoto anyonye kwa muda gani?"] and gold == [[0]] and role == "passage"
+
+
+def test_english_paragraphs_are_skipped():
+    from kiswahili_embed.documents import clean_paragraphs, is_swahili
+    assert is_swahili("Mtoto apewe maziwa ya mama pekee kwa miezi sita.")
+    assert not is_swahili("The child should be given breast milk only for the first six months.")
+    paras = clean_paragraphs("Breastfeed the child on demand, day and night, for health.\n\n"
+                             "Mnyonyeshe mtoto mara kwa mara usiku na mchana.")
+    assert paras == ["Mnyonyeshe mtoto mara kwa mara usiku na mchana."]
