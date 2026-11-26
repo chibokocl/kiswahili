@@ -108,6 +108,51 @@ What this shows:
   (CC BY-SA) is clear. With 38-40 questions per test, only differences of several questions mean
   anything; a larger, native-speaker-checked question set is the main thing missing.
 
+## Training on generated questions (best health model)
+
+`generate_questions.py` asked Claude (claude-opus-5-5, low effort) for search queries for every
+paragraph of the health documents, each with a verbatim answer quote that is checked against the
+paragraph. Over 9 documents (the 7 above plus two MOH growth-monitoring guides) this produced
+**4,479 questions** (3,828 on training documents, 651 on the held-out IYCF and Matibabu documents;
+2,254 caregiver, 2,225 clinician voice) for about $14. A 30-question spot check found ~27 natural
+and correctly answered; the rest are clumsy keyword strings or questions about the document itself.
+
+```bash
+python -m kiswahili_embed.generate_questions DOCS --target 6000          # needs ANTHROPIC_API_KEY
+python -m kiswahili_embed.train --pairs 8000 --docs DOCS --no-doc-neighbours \
+    --questions kiswahili_embed/data/generated/health_questions.jsonl -o models/kiswahili-e5-small-q-docs
+python -m kiswahili_embed.evaluate --model models/kiswahili-e5-small-q-docs --docs DOCS \
+    --questions kiswahili_embed/data/generated/health_questions.jsonl
+```
+
+r@1 / MRR. `health` = the 150 hand-written questions; `generated` = the 651 generated questions on
+held-out documents (pool: all 292 held-out paragraphs). Q = Bible pairs + question pairs;
+Q+docs = also self-supervised pairs from the training documents (no neighbour pairs).
+
+| task | n | base | Bible only | + health docs | Q | **Q+docs** |
+|---|---|---|---|---|---|---|
+| health | 150 | 0.313 / 0.43 | 0.433 / 0.56 | 0.427 / 0.54 | 0.547 / 0.66 | **0.553 / 0.67** |
+| health:caregiver | 95 | 0.305 / 0.45 | 0.411 / 0.54 | 0.337 / 0.47 | 0.526 / 0.65 | **0.547 / 0.66** |
+| health:clinician | 55 | 0.327 / 0.41 | 0.473 / 0.60 | **0.582 / 0.66** | **0.582 / 0.68** | 0.564 / 0.67 |
+| generated | 651 | 0.250 / 0.36 | 0.343 / 0.47 | 0.301 / 0.41 | 0.395 / 0.53 | **0.410 / 0.54** |
+| generated:caregiver | 324 | 0.250 / 0.37 | 0.346 / 0.47 | 0.259 / 0.38 | 0.417 / 0.56 | **0.426 / 0.56** |
+| generated:clinician | 327 | 0.251 / 0.36 | 0.339 / 0.46 | 0.343 / 0.45 | 0.373 / 0.51 | **0.394 / 0.52** |
+| search (modern + Bible distractors) | 40 | 0.225 | 0.400 | 0.450 | **0.525** | **0.525** |
+| search-clean | 40 | 0.700 | 0.625 | **0.750** | 0.700 | 0.725 |
+
+Paired against the Bible-only model: Q+docs is better on 296 and worse on 85 of the 651 generated
+questions, and better on 57 / worse on 21 of the 150 hand-written ones (Q: 284/99 and 58/15). Against
+the base model on the hand-written set: 83 better, 16 worse.
+
+* **Question pairs are what helps.** Self-supervised pairs from the same documents gave little; the
+  generated questions lift health search recall@1 from 0.43 to 0.55 on questions the model never
+  saw, written by a different author (the hand-written set), not only on generated ones.
+* Caregiver questions gain most (0.41 -> 0.55); clinician questions were already helped by the
+  documents and gain less.
+* General modern search does not suffer (search-clean 0.725 vs 0.700 base, within noise).
+* Licence: these models are trained on the health documents, whose licence is not cleared, and on
+  questions generated from them. Keep them private until it is.
+
 ## Noun classes from embeddings (checker experiment)
 
 `python -m kiswahili_embed.noun_classes` guesses the ngeli of a word from its nearest known nouns
